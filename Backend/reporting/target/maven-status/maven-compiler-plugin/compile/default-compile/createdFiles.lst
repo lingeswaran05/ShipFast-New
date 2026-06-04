@@ -1,0 +1,9 @@
+com\shipfast\reporting\controller\ReportingController.class
+com\shipfast\reporting\entity\ReportSnapshot.class
+com\shipfast\reporting\dto\ApiResponse.class
+com\shipfast\reporting\entity\ReportSnapshot$ReportSnapshotBuilder.class
+com\shipfast\reporting\repository\ReportSnapshotRepository.class
+com\shipfast\reporting\service\ReportingService.class
+com\shipfast\reporting\ReportingApplication.class
+com\shipfast\reporting\dto\ReportSummaryResponse.class
+com\shipfast\reporting\service\impl\ReportingServiceImpl.class

@@ -1,0 +1,400 @@
+{
+  "users": [
+    {
+      "userId": "u1",
+      "name": "John Doe",
+      "email": "customer@shipfast.com",
+      "passwordHash": "customer",
+      "role": "CUSTOMER",
+      "contactInfo": {
+        "phone": "+1 234 567 8900",
+        "addressLine": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "pincode": "10001"
+      },
+      "avatarUrl": "https://i.pravatar.cc/150?u=u1",
+      "id": "u1"
+    },
+    {
+      "userId": "u2",
+      "name": "Admin User",
+      "email": "admin@shipfast.com",
+      "passwordHash": "admin",
+      "role": "ADMIN",
+      "avatarUrl": "https://i.pravatar.cc/150?u=u2",
+      "id": "u2"
+    },
+    {
+      "userId": "u3",
+      "name": "Agent Smith",
+      "email": "agent@shipfast.com",
+      "passwordHash": "agent",
+      "role": "AGENT",
+      "location": "New York",
+      "avatarUrl": "https://i.pravatar.cc/150?u=u3",
+      "id": "u3"
+    },
+    {
+      "userId": "u4",
+      "name": "Vishnu Bharathi",
+      "email": "717823s162@kce.ac.in",
+      "passwordHash": "zxcvbnm",
+      "role": "ADMIN",
+      "location": "Erode",
+      "avatarUrl": "https://i.pravatar.cc/150?u=u4",
+      "id": "u4"
+    }
+  ],
+  "shipments": [
+    {
+      "shipmentId": "SH-1001",
+      "trackingNumber": "TRK123456789",
+      "customerId": "u1",
+      "status": "DELIVERED",
+      "serviceType": "EXPRESS",
+      "senderAddress": {
+        "fullName": "John Doe",
+        "addressLine": "123 Main St",
+        "city": "New York",
+        "pincode": "10001",
+        "phone": "555-0100"
+      },
+      "receiverAddress": {
+        "fullName": "Jane Smith",
+        "addressLine": "456 Market St",
+        "city": "Los Angeles",
+        "pincode": "90001",
+        "phone": "555-0101"
+      },
+      "packageDetails": {
+        "weightKg": 2.5,
+        "contentType": "Electronics",
+        "dimensions": "10x10x10"
+      },
+      "priceBreakdown": {
+        "baseRate": 130,
+        "tax": 20,
+        "totalAmount": 150
+      },
+      "dates": {
+        "bookingDate": "2023-10-25",
+        "estimatedDelivery": "2023-10-27",
+        "actualDelivery": "2023-10-28"
+      },
+      "paymentStatus": "PAID",
+      "id": "SH-1001"
+    },
+    {
+      "shipmentId": "SH-1002",
+      "trackingNumber": "TRK987654321",
+      "customerId": "u1",
+      "status": "DELIVERED",
+      "serviceType": "SAME_DAY",
+      "senderAddress": {
+        "fullName": "John Doe",
+        "addressLine": "123 Main St",
+        "city": "New York",
+        "pincode": "10001",
+        "phone": "555-0100"
+      },
+      "receiverAddress": {
+        "fullName": "Bob Brown",
+        "addressLine": "789 Broadway",
+        "city": "New York",
+        "pincode": "10002",
+        "phone": "555-0102"
+      },
+      "packageDetails": {
+        "weightKg": 0.5,
+        "contentType": "Documents"
+      },
+      "priceBreakdown": {
+        "totalAmount": 85
+      },
+      "dates": {
+        "bookingDate": "2023-10-20"
+      },
+      "paymentStatus": "PAID",
+      "id": "SH-1002"
+    },
+    {
+      "shipmentId": "SH-1003",
+      "trackingNumber": "TRK456123789",
+      "customerId": "u1",
+      "status": "IN_TRANSIT",
+      "serviceType": "STANDARD",
+      "senderAddress": {
+        "fullName": "John Doe",
+        "addressLine": "123 Main St",
+        "city": "New York",
+        "phone": "555-0100"
+      },
+      "receiverAddress": {
+        "fullName": "Alice Green",
+        "addressLine": "321 Oak St",
+        "city": "Austin",
+        "phone": "555-0103"
+      },
+      "packageDetails": {
+        "weightKg": 5,
+        "contentType": "Clothing"
+      },
+      "priceBreakdown": {
+        "totalAmount": 45
+      },
+      "dates": {
+        "bookingDate": "2023-10-26"
+      },
+      "paymentStatus": "PENDING",
+      "id": "SH-1003"
+    },
+    {
+      "shipmentId": "SH-1771465832687",
+      "trackingNumber": "TRK1771465832687",
+      "customerId": "u1771428493309",
+      "status": "BOOKED",
+      "serviceType": "EXPRESS",
+      "senderAddress": {
+        "fullName": "Lingeswaran A",
+        "phone": "+919344474088",
+        "addressLine": "",
+        "city": "Covai",
+        "pincode": "641032"
+      },
+      "receiverAddress": {
+        "fullName": "maha A",
+        "phone": "+919344474087",
+        "addressLine": "",
+        "city": "Madurai",
+        "pincode": "623701"
+      },
+      "packageDetails": {
+        "weightKg": 2,
+        "contentType": "Express",
+        "dimensions": "10x10x10"
+      },
+      "priceBreakdown": {
+        "baseRate": 200,
+        "tax": 50,
+        "totalAmount": 250
+      },
+      "dates": {
+        "bookingDate": "2026-02-19",
+        "estimatedDelivery": "2026-02-22"
+      },
+      "paymentStatus": "PENDING",
+      "id": "VIpuEuU"
+    },
+    {
+      "shipmentId": "SH-1771468091811",
+      "trackingNumber": "TRK1771468091811",
+      "customerId": "u1771428493309",
+      "status": "BOOKED",
+      "serviceType": "EXPRESS",
+      "senderAddress": {
+        "fullName": "",
+        "phone": "",
+        "addressLine": "",
+        "city": "Covai",
+        "pincode": ""
+      },
+      "receiverAddress": {
+        "fullName": "",
+        "phone": "",
+        "addressLine": "",
+        "city": "Madurai",
+        "pincode": ""
+      },
+      "packageDetails": {
+        "weightKg": 0,
+        "contentType": "Express",
+        "dimensions": "10x10x10"
+      },
+      "priceBreakdown": {
+        "baseRate": 160,
+        "tax": 40,
+        "totalAmount": 200
+      },
+      "dates": {
+        "bookingDate": "2026-02-19",
+        "estimatedDelivery": "2026-02-22"
+      },
+      "paymentStatus": "PENDING",
+      "id": "oWihoao"
+    },
+    {
+      "shipmentId": "SH-1771483592284",
+      "trackingNumber": "TRK1771483592284",
+      "customerId": "u1771428493309",
+      "status": "BOOKED",
+      "serviceType": "EXPRESS",
+      "senderAddress": {
+        "fullName": "",
+        "phone": "",
+        "addressLine": "",
+        "city": "Covai",
+        "pincode": ""
+      },
+      "receiverAddress": {
+        "fullName": "",
+        "phone": "",
+        "addressLine": "",
+        "city": "Madurai",
+        "pincode": ""
+      },
+      "packageDetails": {
+        "weightKg": 0,
+        "contentType": "Express",
+        "dimensions": "10x10x10"
+      },
+      "priceBreakdown": {
+        "baseRate": 160,
+        "tax": 40,
+        "totalAmount": 200
+      },
+      "dates": {
+        "bookingDate": "2026-02-19",
+        "estimatedDelivery": "2026-02-22"
+      },
+      "paymentStatus": "PENDING",
+      "id": "rDpz1DG"
+    }
+  ],
+  "transactions": [
+    {
+      "transactionId": "TXN12345",
+      "shipmentId": "SH-1001",
+      "date": "2023-10-25",
+      "amount": 150,
+      "status": "COMPLETED",
+      "description": "Shipment #TRK123456789",
+      "id": "TXN12345"
+    },
+    {
+      "transactionId": "TXN1771483592284",
+      "shipmentId": "SH-1771483592284",
+      "date": "2026-02-19",
+      "amount": 200,
+      "status": "COMPLETED",
+      "description": "Shipment #TRK1771483592284",
+      "paymentGatewayId": "txn_1771483592283",
+      "id": "1HbiiB4"
+    }
+  ],
+  "branches": [
+    {
+      "branchId": "BR001",
+      "name": "New York Central",
+      "type": "HUB",
+      "location": {
+        "address": "Manhattan",
+        "city": "New York",
+        "state": "NY"
+      },
+      "managerUserId": "u-mgr-1",
+      "managerName": "Alice Johnson",
+      "contactEmail": "alice@shipfast.com",
+      "stats": {
+        "staffCount": 45,
+        "shipmentVolume": 1200,
+        "revenue": 50000,
+        "performanceScore": 95
+      },
+      "status": "ACTIVE",
+      "id": "BR001"
+    },
+    {
+      "branchId": "BR002",
+      "name": "Los Angeles Hub",
+      "type": "HUB",
+      "location": {
+        "address": "Downtown",
+        "city": "Los Angeles",
+        "state": "CA"
+      },
+      "managerName": "Bob Williams",
+      "contactEmail": "bob@shipfast.com",
+      "stats": {
+        "staffCount": 38,
+        "shipmentVolume": 950,
+        "revenue": 42000,
+        "performanceScore": 88
+      },
+      "status": "ACTIVE",
+      "id": "BR002"
+    }
+  ],
+  "fleet": [
+    {
+      "vehicleId": "V001",
+      "vehicleNumber": "NY-1234",
+      "type": "VAN",
+      "driverName": "Mike Driver",
+      "status": "ACTIVE",
+      "capacityKg": 1000,
+      "id": "V001"
+    },
+    {
+      "vehicleId": "V002",
+      "vehicleNumber": "NY-5678",
+      "type": "TRUCK",
+      "driverName": "Steve Hauler",
+      "status": "MAINTENANCE",
+      "capacityKg": 5000,
+      "id": "V002"
+    }
+  ],
+  "staff": [
+    {
+      "staffId": "S001",
+      "name": "Sarah Connor",
+      "role": "MANAGER",
+      "branchName": "New York Central",
+      "status": "ACTIVE",
+      "phone": "555-1111",
+      "documents": {
+        "aadhaar": "SUBMITTED",
+        "pan": "SUBMITTED"
+      },
+      "id": "S001"
+    },
+    {
+      "staffId": "S002",
+      "name": "Kyle Reese",
+      "role": "DRIVER",
+      "branchName": "New York Central",
+      "status": "ACTIVE",
+      "phone": "555-2222",
+      "documents": {
+        "aadhaar": "SUBMITTED"
+      },
+      "id": "S002"
+    }
+  ],
+  "tickets": [
+    {
+      "ticketId": "TKT-001",
+      "userId": "u1",
+      "subject": "Delayed Shipment",
+      "message": "My shipment usually takes 2 days but it's been 4.",
+      "status": "OPEN",
+      "createdAt": "2023-10-26",
+      "priority": "HIGH",
+      "id": "TKT-001"
+    }
+  ],
+  "runSheets": [],
+  "cashCollections": [],
+  "cities": [
+    "New York",
+    "Los Angeles",
+    "Chicago",
+    "Houston",
+    "Phoenix",
+    "Philadelphia",
+    "Covai",
+    "Madurai"
+  ]
+}
+
