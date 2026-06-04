@@ -58,13 +58,13 @@ public class ShipmentServiceImpl implements ShipmentService {
     private final InvoiceService invoiceService;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${operations.service.url:http://localhost:8082}")
+    @Value("${operations.service.url}")
     private String operationsServiceUrl;
 
-    @Value("${communications.service.url:http://localhost:8086}")
+    @Value("${communications.service.url}")
     private String communicationsServiceUrl;
 
-    @Value("${auth.service.url:http://localhost:8085/api/v1/auth}")
+    @Value("${auth.service.url}")
     private String authServiceUrl;
 
     public ShipmentServiceImpl(ShipmentRepository shipmentRepository,

@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${operations.service.url:http://localhost:8082/api/operations}")
+    @Value("${operations.service.url}")
     private String operationsServiceUrl;
 
     public AuthServiceImpl(
