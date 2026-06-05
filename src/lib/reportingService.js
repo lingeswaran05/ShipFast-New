@@ -12,7 +12,7 @@ let activeReportingBaseIndex = 0;
 
 const api = axios.create({
   baseURL: REPORTING_API_BASE_URLS[0],
-  timeout: 15000
+  timeout: 60000
 });
 
 api.interceptors.request.use((config) => {
@@ -68,7 +68,7 @@ export const reportingService = {
       try {
         response = await axios.get(url, {
           responseType: 'blob',
-          timeout: 20000,
+          timeout: 60000,
           headers: (() => {
             const token = authStorage.getAccessToken();
             return token ? { Authorization: `Bearer ${token}` } : {};

@@ -18,7 +18,7 @@ const endpointAvailability = {
 
 const notificationsApi = axios.create({
   baseURL: toServiceBaseUrl(COMM_BASE_URLS[0], API_BASE_PATHS.NOTIFICATIONS),
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -26,7 +26,7 @@ const notificationsApi = axios.create({
 
 const supportApi = axios.create({
   baseURL: toServiceBaseUrl(COMM_BASE_URLS[0], API_BASE_PATHS.SUPPORT),
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }

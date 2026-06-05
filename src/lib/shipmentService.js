@@ -11,7 +11,7 @@ const SHIPMENT_BASE_URLS = SHIPMENT_BASE_CANDIDATES
   .filter((value, index, list) => list.indexOf(value) === index);
 const api = axios.create({
   baseURL: SHIPMENT_BASE_URLS[0],
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }

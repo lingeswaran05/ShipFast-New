@@ -2892,7 +2892,7 @@ function AdminRunSheetView({ shipments = [], contextBranches = [], contextStaff,
         }
       };
       loadLiveProfiles();
-      const intervalId = setInterval(loadLiveProfiles, 15000);
+      const intervalId = setInterval(loadLiveProfiles, 60000);
       return () => {
         cancelled = true;
         clearInterval(intervalId);

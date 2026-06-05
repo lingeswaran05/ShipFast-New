@@ -25,7 +25,7 @@ const CURRENT_USER_KEY = 'currentUser';
 
 const api = axios.create({
   baseURL: AUTH_BASE_URLS[0],
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }

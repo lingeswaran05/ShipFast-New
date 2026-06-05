@@ -11,7 +11,7 @@ const OPERATIONS_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_OPERATI
   .filter((value, index, list) => list.indexOf(value) === index);
 const api = axios.create({
   baseURL: OPERATIONS_BASE_URLS[0],
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }

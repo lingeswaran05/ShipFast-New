@@ -11,7 +11,7 @@ const ADMIN_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_ADMIN_BASE_U
 
 const api = axios.create({
   baseURL: ADMIN_BASE_URLS[0],
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
