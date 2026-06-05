@@ -13,7 +13,7 @@ const ACCESS_TOKEN_KEY = 'sf_access_token';
 const REFRESH_TOKEN_KEY = 'sf_refresh_token';
 const CURRENT_USER_KEY = 'currentUser';
 
-const api = authClient;
+const api = authClient ;
 
 let refreshPromise = null;
 
