@@ -54,6 +54,10 @@ public class AuthServiceImpl implements AuthService {
     @Value("${operations.service.url}")
     private String operationsServiceUrl;
 
+    private String operationsApiBaseUrl() {
+        return appendPathIfMissing(operationsServiceUrl, "/api/operations");
+    }
+
     public AuthServiceImpl(
             EmailService emailService,
             UserAuthRepository userAuthRepository,
@@ -349,7 +353,7 @@ public class AuthServiceImpl implements AuthService {
 
         String endpoint = String.format(
                 "%s/agents/profile/%s",
-                operationsServiceUrl,
+                operationsApiBaseUrl(),
                 UriUtils.encodePathSegment(userId, java.nio.charset.StandardCharsets.UTF_8)
         );
         try {
@@ -434,7 +438,7 @@ public class AuthServiceImpl implements AuthService {
             }
 
             String encodedIdentity = UriUtils.encodePathSegment(identity, java.nio.charset.StandardCharsets.UTF_8);
-            String endpoint = String.format("%s/agents/profile/%s", operationsServiceUrl, encodedIdentity);
+            String endpoint = String.format("%s/agents/profile/%s", operationsApiBaseUrl(), encodedIdentity);
             try {
                 restTemplate.delete(endpoint);
             } catch (HttpClientErrorException error) {
@@ -446,5 +450,17 @@ public class AuthServiceImpl implements AuthService {
                 throw new CustomException("Failed to hard delete user operational profile");
             }
         }
+    }
+
+    private String appendPathIfMissing(String baseUrl, String path) {
+        String normalizedBase = stripTrailingSlash(baseUrl);
+        if (normalizedBase.isEmpty()) {
+            throw new CustomException("Required service URL is not configured");
+        }
+        return normalizedBase.endsWith(path) ? normalizedBase : normalizedBase + path;
+    }
+
+    private String stripTrailingSlash(String value) {
+        return value == null ? "" : value.replaceAll("/+$", "").trim();
     }
 }

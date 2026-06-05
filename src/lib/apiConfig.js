@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:8088';
+import { API_ENDPOINTS, API_GATEWAY_URL } from '../config/api';
 
 const stripTrailingSlash = (value = '') => String(value || '').replace(/\/+$/, '');
 const toLower = (value = '') => String(value || '').trim().toLowerCase();
@@ -9,18 +9,18 @@ const isHttpLocal = (value = '') => {
 const FALLBACK_ENABLED = String(import.meta.env.VITE_ENABLE_OLD_BACKEND_FALLBACK ?? 'false').toLowerCase() === 'true';
 
 export const API_BASE_URL = stripTrailingSlash(
-  import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL
+  import.meta.env.VITE_API_BASE_URL || API_GATEWAY_URL || API_ENDPOINTS.AUTH
 );
 
-export const resolveServiceBaseUrl = (envValue) => {
+export const resolveServiceBaseUrl = (envValue, defaultBaseUrl = API_BASE_URL) => {
   const explicit = stripTrailingSlash(envValue || '');
   if (explicit) return explicit;
-  return API_BASE_URL;
+  return stripTrailingSlash(defaultBaseUrl || API_BASE_URL);
 };
 
 export const resolveServiceBaseUrls = (envValue, options = {}) => {
-  const { localDirectBase = '', includeProxyFallback = true } = options;
-  const primary = resolveServiceBaseUrl(envValue);
+  const { defaultBaseUrl = API_BASE_URL, localDirectBase = '', includeProxyFallback = true } = options;
+  const primary = resolveServiceBaseUrl(envValue, defaultBaseUrl);
   const primaryClean = stripTrailingSlash(primary);
   const candidates = [];
   const localDirect = stripTrailingSlash(localDirectBase);

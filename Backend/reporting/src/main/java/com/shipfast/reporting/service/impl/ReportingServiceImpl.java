@@ -29,9 +29,13 @@ public class ReportingServiceImpl implements ReportingService {
     @Value("${shipment.service.url}")
     private String shipmentServiceUrl;
 
+    private String shipmentApiBaseUrl() {
+        return appendPathIfMissing(shipmentServiceUrl, "/api/v1/shipments");
+    }
+
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> fetchShipments() {
-        String url = shipmentServiceUrl + "/api/v1/shipments?page=0&limit=1000";
+        String url = shipmentApiBaseUrl() + "?page=0&limit=1000";
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
             url,
             HttpMethod.GET,
@@ -96,5 +100,17 @@ public class ReportingServiceImpl implements ReportingService {
                     .append(String.valueOf(shipment.getOrDefault("cost", "0"))).append('\n');
         }
         return csv.toString();
+    }
+
+    private String appendPathIfMissing(String baseUrl, String path) {
+        String normalizedBase = stripTrailingSlash(baseUrl);
+        if (normalizedBase.isEmpty()) {
+            throw new IllegalStateException("Required service URL is not configured");
+        }
+        return normalizedBase.endsWith(path) ? normalizedBase : normalizedBase + path;
+    }
+
+    private String stripTrailingSlash(String value) {
+        return value == null ? "" : value.replaceAll("/+$", "").trim();
     }
 }

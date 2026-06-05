@@ -41,4 +41,28 @@ public class AdminController {
         return new ApiResponse<>(true, "Vehicles fetched",
                 adminService.getAllVehicles());
     }
+
+    @PutMapping("/branches/{branchId}")
+    public ApiResponse<Branch> updateBranch(@PathVariable String branchId, @RequestBody Branch branch) {
+        return new ApiResponse<>(true, "Branch updated",
+                adminService.updateBranch(branchId, branch));
+    }
+
+    @PutMapping("/vehicles/{vehicleId}")
+    public ApiResponse<Vehicle> updateVehicle(@PathVariable String vehicleId, @RequestBody Vehicle vehicle) {
+        return new ApiResponse<>(true, "Vehicle updated",
+                adminService.updateVehicle(vehicleId, vehicle));
+    }
+
+    @DeleteMapping("/branches/{branchId}")
+    public ApiResponse<Void> deleteBranch(@PathVariable String branchId) {
+        adminService.deleteBranch(branchId);
+        return new ApiResponse<>(true, "Branch deleted", null);
+    }
+
+    @DeleteMapping("/vehicles/{vehicleId}")
+    public ApiResponse<Void> deleteVehicle(@PathVariable String vehicleId) {
+        adminService.deleteVehicle(vehicleId);
+        return new ApiResponse<>(true, "Vehicle deleted", null);
+    }
 }

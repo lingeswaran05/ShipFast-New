@@ -53,6 +53,10 @@ public class OperationsService {
     @Value("${shipment.service.url}")
     private String shipmentServiceUrl;
 
+    private String shipmentApiBaseUrl() {
+        return appendPathIfMissing(shipmentServiceUrl, "/api/v1/shipments");
+    }
+
 
 
     public AgentResponse createAgent(AgentRequest request) {
@@ -357,7 +361,7 @@ public class OperationsService {
             for (String shipmentId : request.getShipmentTrackingNumbers()) {
                 try {
                     restTemplate.postForObject(
-                            shipmentServiceUrl + "/api/v1/shipments/" + shipmentId + "/assign",
+                        shipmentApiBaseUrl() + "/" + shipmentId + "/assign",
                             java.util.Map.of("agentId", request.getAgentId()),
                             Object.class
                     );
@@ -394,9 +398,9 @@ public class OperationsService {
 
         try {
             restTemplate.patchForObject(
-                    shipmentServiceUrl + "/api/v1/shipments/" +
-                            request.getShipmentTrackingNumber() +
-                            "/status",
+                shipmentApiBaseUrl() + "/" +
+                        request.getShipmentTrackingNumber() +
+                        "/status",
                     java.util.Map.of("status", request.getStatus(), "remarks", "Updated from scan operation"),
                     Object.class
             );
@@ -489,5 +493,17 @@ public class OperationsService {
                 .paymentStatus(invoice.getPaymentStatus())
                 .createdAt(invoice.getCreatedAt())
                 .build();
+    }
+
+    private String appendPathIfMissing(String baseUrl, String path) {
+        String normalizedBase = stripTrailingSlash(baseUrl);
+        if (normalizedBase.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Required service URL is not configured");
+        }
+        return normalizedBase.endsWith(path) ? normalizedBase : normalizedBase + path;
+    }
+
+    private String stripTrailingSlash(String value) {
+        return value == null ? "" : value.replaceAll("/+$", "").trim();
     }
 }

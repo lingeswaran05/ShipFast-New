@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const COMM_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_COMM_BASE_URL, {
-  localDirectBase: 'http://localhost:8088'
+  defaultBaseUrl: API_ENDPOINTS.COMMUNICATIONS
 })
   .filter((value, index, list) => list.indexOf(value) === index);
 const LOCAL_NOTIFICATIONS_KEY = 'sf_local_notifications';
@@ -16,7 +17,7 @@ const endpointAvailability = {
 };
 
 const notificationsApi = axios.create({
-  baseURL: toServiceBaseUrl(COMM_BASE_URLS[0], '/api/notifications'),
+  baseURL: toServiceBaseUrl(COMM_BASE_URLS[0], API_BASE_PATHS.NOTIFICATIONS),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
@@ -24,15 +25,15 @@ const notificationsApi = axios.create({
 });
 
 const supportApi = axios.create({
-  baseURL: toServiceBaseUrl(COMM_BASE_URLS[0], '/api/support'),
+  baseURL: toServiceBaseUrl(COMM_BASE_URLS[0], API_BASE_PATHS.SUPPORT),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-const notificationsBaseUrls = COMM_BASE_URLS.map((base) => toServiceBaseUrl(base, '/api/notifications'));
-const supportBaseUrls = COMM_BASE_URLS.map((base) => toServiceBaseUrl(base, '/api/support'));
+const notificationsBaseUrls = COMM_BASE_URLS.map((base) => toServiceBaseUrl(base, API_BASE_PATHS.NOTIFICATIONS));
+const supportBaseUrls = COMM_BASE_URLS.map((base) => toServiceBaseUrl(base, API_BASE_PATHS.SUPPORT));
 let activeNotificationsBaseIndex = 0;
 let activeSupportBaseIndex = 0;
 const setNotificationsBase = (index) => {

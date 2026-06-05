@@ -1,12 +1,13 @@
 import axios from 'axios';
+import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const SHIPMENT_BASE_CANDIDATES = resolveServiceBaseUrls(import.meta.env.VITE_SHIPMENT_BASE_URL, {
-  localDirectBase: 'http://localhost:8088'
+  defaultBaseUrl: API_ENDPOINTS.SHIPMENT
 });
 const SHIPMENT_BASE_URLS = SHIPMENT_BASE_CANDIDATES
-  .map((base) => toServiceBaseUrl(base, '/api/v1/shipments'))
+  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.SHIPMENT))
   .filter((value, index, list) => list.indexOf(value) === index);
 const api = axios.create({
   baseURL: SHIPMENT_BASE_URLS[0],

@@ -14,4 +14,12 @@ public interface AdminService {
     List<Branch> getAllBranches();
 
     List<Vehicle> getAllVehicles();
+
+    Branch updateBranch(String branchId, Branch branch);
+
+    Vehicle updateVehicle(String vehicleId, Vehicle vehicle);
+
+    void deleteBranch(String branchId);
+
+    void deleteVehicle(String vehicleId);
 }

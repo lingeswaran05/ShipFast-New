@@ -1,11 +1,12 @@
 import axios from 'axios';
+import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const ROLE_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_AUTH_BASE_URL, {
-  localDirectBase: 'http://localhost:8088'
+  defaultBaseUrl: API_ENDPOINTS.AUTH
 })
-  .map((base) => toServiceBaseUrl(base, '/api/v1/roles'))
+  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.ROLES))
   .filter((value, index, list) => list.indexOf(value) === index);
 
 const api = axios.create({

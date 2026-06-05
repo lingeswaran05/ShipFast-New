@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
+import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const ADMIN_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_ADMIN_BASE_URL, {
-  localDirectBase: 'http://localhost:8088'
+  defaultBaseUrl: API_ENDPOINTS.ADMIN
 })
-  .map((base) => toServiceBaseUrl(base, '/api/admin'))
+  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.ADMIN))
   .filter((value, index, list) => list.indexOf(value) === index);
 
 const api = axios.create({
@@ -13,6 +15,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   }
+});
+
+api.interceptors.request.use((config) => {
+  const token = authStorage.getAccessToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 let activeAdminBaseIndex = 0;

@@ -1,14 +1,15 @@
 import axios from 'axios';
+import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { resolveServiceBaseUrls, shouldRetryWithFallback } from './apiConfig';
 
 const toAuthBaseUrl = (base = '') => {
   const cleaned = String(base || '').replace(/\/+$/, '');
-  if (!cleaned) return '/api/auth';
-  return cleaned.endsWith('/api/auth') ? cleaned : `${cleaned}/api/auth`;
+  if (!cleaned) return API_BASE_PATHS.AUTH;
+  return cleaned.endsWith(API_BASE_PATHS.AUTH) ? cleaned : `${cleaned}${API_BASE_PATHS.AUTH}`;
 };
 
 const AUTH_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_AUTH_BASE_URL, {
-  localDirectBase: 'http://localhost:8088'
+  defaultBaseUrl: API_ENDPOINTS.AUTH
 })
   .map(toAuthBaseUrl)
   .filter((value, index, list) => list.indexOf(value) === index);

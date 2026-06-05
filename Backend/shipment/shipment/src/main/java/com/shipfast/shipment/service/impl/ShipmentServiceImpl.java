@@ -67,6 +67,18 @@ public class ShipmentServiceImpl implements ShipmentService {
     @Value("${auth.service.url}")
     private String authServiceUrl;
 
+    private String operationsApiBaseUrl() {
+        return appendPathIfMissing(operationsServiceUrl, "/api/operations");
+    }
+
+    private String authApiBaseUrl() {
+        return appendPathIfMissing(authServiceUrl, "/api/auth");
+    }
+
+    private String communicationsBaseUrl() {
+        return stripTrailingSlash(communicationsServiceUrl);
+    }
+
     public ShipmentServiceImpl(ShipmentRepository shipmentRepository,
                                PricingConfigRepository pricingConfigRepository,
                                EmailService emailService,
@@ -376,7 +388,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         if (hasText(agentIdentifier)) {
             try {
                 restTemplate.postForObject(
-                        operationsServiceUrl + "/api/operations/agents/" + UriUtils.encodePathSegment(agentIdentifier, java.nio.charset.StandardCharsets.UTF_8) + "/rating",
+                        operationsApiBaseUrl() + "/agents/" + UriUtils.encodePathSegment(agentIdentifier, java.nio.charset.StandardCharsets.UTF_8) + "/rating",
                         Map.of("rating", request.getRating()),
                         Object.class
                 );
@@ -451,7 +463,7 @@ public class ShipmentServiceImpl implements ShipmentService {
                 + (hasText(remarks) ? ". " + remarks.trim() : ".");
         try {
             restTemplate.postForObject(
-                    communicationsServiceUrl + "/api/notifications/send?userId={userId}&type={type}&message={message}",
+                    communicationsBaseUrl() + "/api/notifications/send?userId={userId}&type={type}&message={message}",
                     null,
                     Object.class,
                     shipment.getCustomerId(),
@@ -580,7 +592,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         if (!hasText(agentIdentifier)) return "Assigned Agent";
         try {
             Map<String, Object> agent = restTemplate.getForObject(
-                    operationsServiceUrl + "/api/operations/agents/"
+                    operationsApiBaseUrl() + "/agents/"
                             + UriUtils.encodePathSegment(agentIdentifier, java.nio.charset.StandardCharsets.UTF_8),
                     Map.class
             );
@@ -621,7 +633,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         if (!hasText(emailOrId)) return null;
         try {
             Map<String, Object> response = restTemplate.getForObject(
-                    authServiceUrl + "/internal/users/"
+                    authApiBaseUrl() + "/internal/users/"
                             + UriUtils.encodePathSegment(emailOrId, java.nio.charset.StandardCharsets.UTF_8),
                     Map.class
             );
@@ -1011,5 +1023,17 @@ public class ShipmentServiceImpl implements ShipmentService {
     private String canonicalStatus(String status) {
         if (!hasText(status)) return "";
         return normalizeStatus(status).toUpperCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
+    }
+
+    private String appendPathIfMissing(String baseUrl, String path) {
+        String normalizedBase = stripTrailingSlash(baseUrl);
+        if (normalizedBase.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Required service URL is not configured");
+        }
+        return normalizedBase.endsWith(path) ? normalizedBase : normalizedBase + path;
+    }
+
+    private String stripTrailingSlash(String value) {
+        return value == null ? "" : value.replaceAll("/+$", "").trim();
     }
 }

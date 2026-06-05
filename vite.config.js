@@ -2,6 +2,8 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
+const GATEWAY_URL = "https://shipfast-gateway.onrender.com"
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -12,39 +14,47 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/v1/auth': {
-        target: 'http://localhost:8085',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/auth': {
-        target: 'http://localhost:8085',
+        target: GATEWAY_URL,
+        changeOrigin: true,
+      },
+      '/api/v1/roles': {
+        target: GATEWAY_URL,
+        changeOrigin: true,
+      },
+      '/api/roles': {
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/v1/shipments': {
-        target: 'http://localhost:8081',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/public': {
-        target: 'http://localhost:8081',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/admin': {
-        target: 'http://localhost:8083',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/operations': {
-        target: 'http://localhost:8082',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/notifications': {
-        target: 'http://localhost:8086',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/support': {
-        target: 'http://localhost:8086',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
       '/api/reports': {
-        target: 'http://localhost:8087',
+        target: GATEWAY_URL,
         changeOrigin: true,
       },
     },

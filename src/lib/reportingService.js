@@ -1,16 +1,27 @@
 import axios from 'axios';
+import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
+import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const REPORTING_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_REPORTING_BASE_URL, {
-  localDirectBase: 'http://localhost:8088'
+  defaultBaseUrl: API_ENDPOINTS.REPORTING
 })
   .filter((value, index, list) => list.indexOf(value) === index);
-const REPORTING_API_BASE_URLS = REPORTING_BASE_URLS.map((base) => toServiceBaseUrl(base, '/api/reports'));
+const REPORTING_API_BASE_URLS = REPORTING_BASE_URLS.map((base) => toServiceBaseUrl(base, API_BASE_PATHS.REPORTING));
 let activeReportingBaseIndex = 0;
 
 const api = axios.create({
   baseURL: REPORTING_API_BASE_URLS[0],
   timeout: 15000
+});
+
+api.interceptors.request.use((config) => {
+  const token = authStorage.getAccessToken();
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 const setReportingBase = (index) => {
@@ -45,7 +56,7 @@ export const reportingService = {
 
   getShipmentCsvUrl() {
     const base = REPORTING_BASE_URLS[activeReportingBaseIndex] || REPORTING_BASE_URLS[0] || '';
-    return toServiceBaseUrl(base, '/api/reports/export/shipments.csv');
+    return toServiceBaseUrl(base, `${API_BASE_PATHS.REPORTING}/export/shipments.csv`);
   },
 
   async downloadShipmentCsv() {
@@ -57,7 +68,11 @@ export const reportingService = {
       try {
         response = await axios.get(url, {
           responseType: 'blob',
-          timeout: 20000
+          timeout: 20000,
+          headers: (() => {
+            const token = authStorage.getAccessToken();
+            return token ? { Authorization: `Bearer ${token}` } : {};
+          })()
         });
         break;
       } catch (error) {

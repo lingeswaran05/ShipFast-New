@@ -2,9 +2,7 @@ package com.shipfast.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-
-import java.util.Arrays;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,7 +25,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http.cors(cors -> cors.disable())
+        http.cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -46,6 +44,15 @@ public class SecurityConfig {
                         "/api/v1/auth/internal/users/**",
                         "/api/auth/internal/users/**"
                         ).permitAll()
+                        .requestMatchers(
+                                "/api/v1/roles/requests/pending",
+                                "/api/v1/roles/requests/*/approve",
+                                "/api/v1/roles/requests/*/reject",
+                                "/api/roles/requests/pending",
+                                "/api/roles/requests/*/approve",
+                                "/api/roles/requests/*/reject"
+                        ).hasRole("ADMIN")
+                        .requestMatchers("/api/v1/roles/**", "/api/roles/**").authenticated()
                         .requestMatchers("/api/v1/auth/admin/**")
                     .hasRole("ADMIN")
                     .requestMatchers("/api/auth/admin/**")
