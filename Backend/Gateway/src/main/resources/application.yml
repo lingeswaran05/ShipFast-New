@@ -51,3 +51,6 @@ management:
     web:
       exposure:
         include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
