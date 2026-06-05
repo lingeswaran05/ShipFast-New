@@ -3,19 +3,20 @@ import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
+  timeout: 60000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
 const SHIPMENT_BASE_CANDIDATES = resolveServiceBaseUrls(import.meta.env.VITE_SHIPMENT_BASE_URL, {
   defaultBaseUrl: API_ENDPOINTS.SHIPMENT
 });
 const SHIPMENT_BASE_URLS = SHIPMENT_BASE_CANDIDATES
   .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.SHIPMENT))
   .filter((value, index, list) => list.indexOf(value) === index);
-const api = axios.create({
-  baseURL: SHIPMENT_BASE_URLS[0],
-  timeout: 60000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
 
 let activeShipmentBaseIndex = 0;
 const setActiveShipmentBase = (index) => {

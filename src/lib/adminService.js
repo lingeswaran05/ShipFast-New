@@ -3,19 +3,19 @@ import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
-const ADMIN_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_ADMIN_BASE_URL, {
-  defaultBaseUrl: API_ENDPOINTS.ADMIN
-})
-  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.ADMIN))
-  .filter((value, index, list) => list.indexOf(value) === index);
-
 const api = axios.create({
-  baseURL: ADMIN_BASE_URLS[0],
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
+const ADMIN_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_ADMIN_BASE_URL, {
+  defaultBaseUrl: API_ENDPOINTS.ADMIN
+})
+  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.ADMIN))
+  .filter((value, index, list) => list.indexOf(value) === index);
 
 api.interceptors.request.use((config) => {
   const token = authStorage.getAccessToken();

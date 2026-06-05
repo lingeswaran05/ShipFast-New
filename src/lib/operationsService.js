@@ -4,18 +4,19 @@ import { authStorage } from './authService';
 import { shipmentService } from './shipmentService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
-const OPERATIONS_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_OPERATIONS_BASE_URL, {
-  defaultBaseUrl: API_ENDPOINTS.OPERATIONS
-})
-  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.OPERATIONS))
-  .filter((value, index, list) => list.indexOf(value) === index);
 const api = axios.create({
-  baseURL: OPERATIONS_BASE_URLS[0],
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
+const OPERATIONS_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_OPERATIONS_BASE_URL, {
+  defaultBaseUrl: API_ENDPOINTS.OPERATIONS
+})
+  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.OPERATIONS))
+  .filter((value, index, list) => list.indexOf(value) === index);
 
 let activeOperationsBaseIndex = 0;
 const setActiveOperationsBase = (index) => {

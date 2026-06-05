@@ -1,51 +1,33 @@
 import axios from 'axios';
-import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
-import { resolveServiceBaseUrls, shouldRetryWithFallback } from './apiConfig';
+import { shouldRetryWithFallback } from './apiConfig';
 
-const toAuthBaseUrl = (base = '') => {
-  const cleaned = String(base || '').replace(/\/+$/, '');
-  if (!cleaned) return API_BASE_PATHS.AUTH;
-  return cleaned.endsWith(API_BASE_PATHS.AUTH) ? cleaned : `${cleaned}${API_BASE_PATHS.AUTH}`;
-};
-
-const AUTH_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_AUTH_BASE_URL, {
-  defaultBaseUrl: API_ENDPOINTS.AUTH
-})
-  .map(toAuthBaseUrl)
-  .filter((value, index, list) => list.indexOf(value) === index);
-
-let activeAuthBaseIndex = 0;
-const setActiveAuthBase = (index) => {
-  activeAuthBaseIndex = index;
-  api.defaults.baseURL = AUTH_BASE_URLS[index] || AUTH_BASE_URLS[0];
-};
-const ACCESS_TOKEN_KEY = 'sf_access_token';
-const REFRESH_TOKEN_KEY = 'sf_refresh_token';
-const CURRENT_USER_KEY = 'currentUser';
-
-const api = axios.create({
-  baseURL: AUTH_BASE_URLS[0],
+const authClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
+const ACCESS_TOKEN_KEY = 'sf_access_token';
+const REFRESH_TOKEN_KEY = 'sf_refresh_token';
+const CURRENT_USER_KEY = 'currentUser';
+
+const api = authClient;
+
 let refreshPromise = null;
 
 const withAuthFallback = async (requestFactory, options = {}) => {
   const { retryOnFailure = true } = options;
   let lastError;
-  for (let offset = 0; offset < AUTH_BASE_URLS.length; offset += 1) {
-    const index = (activeAuthBaseIndex + offset) % AUTH_BASE_URLS.length;
-    setActiveAuthBase(index);
-    try {
-      return await requestFactory(api);
-    } catch (error) {
-      lastError = error;
-      const shouldRetry = retryOnFailure && shouldRetryWithFallback(error) && offset < AUTH_BASE_URLS.length - 1;
-      if (!shouldRetry) throw error;
-    }
+  // Fallback logic is complex and might not be needed with a single gateway URL.
+  // For now, we just try once.
+  try {
+    return await requestFactory(api);
+  } catch (error) {
+    lastError = error;
+    const shouldRetry = retryOnFailure && shouldRetryWithFallback(error);
+    if (!shouldRetry) throw error;
   }
   throw lastError;
 };
@@ -80,8 +62,8 @@ const toBackendRole = (role) => {
 
 const mapProfileToCurrentUser = (profile = {}) => {
   return {
-    id: profile.userId || profile.id || profile.userAuthId || profile.authId || profile.email,
-    userId: profile.userId || profile.id || profile.userAuthId || profile.authId,
+    id: profile.userId || profile.id || profile.email,
+    userId: profile.userId || profile.id,
     name: profile.fullName || profile.name || '',
     fullName: profile.fullName || profile.name || '',
     email: profile.email || '',
@@ -139,16 +121,14 @@ export const authStorage = {
 };
 
 const extractTokens = (payload = {}) => {
-  const accessToken = payload.accessToken || payload.token || payload.jwt || null;
+  const accessToken = payload.accessToken || payload.token || null;
   const refreshToken = payload.refreshToken || null;
   return { accessToken, refreshToken };
 };
 
 const mapAnyUserToCurrentUser = (user = {}) => ({
-  // Auth DB exposes login presence via isActive / is_active.
-  // Mirror it into sessionStatus for admin run-sheet filtering.
   ...(() => {
-    const activeFlag = user?.isActive ?? user?.is_active ?? user?.active;
+    const activeFlag = user?.isActive ?? user?.active;
     const isActive = typeof activeFlag === 'boolean'
       ? activeFlag
       : String(user?.status || '').toLowerCase() === 'active';
@@ -157,8 +137,8 @@ const mapAnyUserToCurrentUser = (user = {}) => ({
       sessionStatus: isActive ? 'online' : 'offline'
     };
   })(),
-  id: user.userId || user.id || user.userAuthId || user.authId || user.email,
-  userId: user.userId || user.id || user.userAuthId || user.authId,
+  id: user.userId || user.id || user.email,
+  userId: user.userId || user.id,
   name: user.fullName || user.name || '',
   fullName: user.fullName || user.name || '',
   email: user.email || '',
@@ -229,13 +209,9 @@ api.interceptors.response.use(
 );
 
 export const authService = {
-  getAxiosInstance() {
-    return api;
-  },
-
   async login(email, password) {
     try {
-      const response = await withAuthFallback((client) => client.post('/login', {
+      const response = await withAuthFallback((client) => client.post('/api/v1/auth/login', {
         email: normalizeEmail(email),
         password
       }));
@@ -243,7 +219,7 @@ export const authService = {
       const tokens = extractTokens(payload);
       authStorage.setTokens(tokens);
 
-      const profileRaw = payload.user || payload.profile || payload.userProfile || null;
+      const profileRaw = payload.user || payload.profile || null;
       const user = profileRaw ? mapProfileToCurrentUser(profileRaw) : await this.getProfile();
       authStorage.setCurrentUser(user);
       return user;
@@ -254,7 +230,7 @@ export const authService = {
 
   async register(userData) {
     try {
-      const response = await withAuthFallback((client) => client.post('/register', {
+      const response = await withAuthFallback((client) => client.post('/api/v1/auth/register', {
         name: userData.fullName || userData.name,
         fullName: userData.fullName || userData.name,
         email: normalizeEmail(userData.email),
@@ -273,7 +249,7 @@ export const authService = {
         authStorage.setTokens(tokens);
       }
 
-      const profileRaw = payload.user || payload.profile || payload.userProfile || payload || null;
+      const profileRaw = payload.user || payload.profile || payload || null;
       const fallbackUser = mapProfileToCurrentUser({
         ...profileRaw,
         fullName: profileRaw?.fullName || profileRaw?.name || userData.fullName || userData.name,
@@ -298,7 +274,7 @@ export const authService = {
 
   async getProfile() {
     try {
-      const response = await withAuthFallback((client) => client.get('/profile'));
+      const response = await withAuthFallback((client) => client.get('/api/v1/auth/profile'));
       const payload = getResponsePayload(response);
       const user = mapProfileToCurrentUser(payload);
       authStorage.setCurrentUser(user);
@@ -310,7 +286,7 @@ export const authService = {
 
   async updateProfile(profileData) {
     try {
-      const response = await withAuthFallback((client) => client.put('/profile', {
+      const response = await withAuthFallback((client) => client.put('/api/v1/auth/profile', {
         fullName: profileData.fullName,
         phoneNumber: profileData.phoneNumber,
         address: profileData.address,
@@ -333,7 +309,7 @@ export const authService = {
 
   async forgotPassword(email) {
     try {
-      await withAuthFallback((client) => client.post('/forgot-password', { email: normalizeEmail(email) }));
+      await withAuthFallback((client) => client.post('/api/v1/auth/forgot-password', { email: normalizeEmail(email) }));
       return true;
     } catch (error) {
       if (error?.response?.status === 404) {
@@ -345,7 +321,7 @@ export const authService = {
 
   async verifyOtp(email, otp) {
     try {
-      await withAuthFallback((client) => client.post('/verify-otp', { email: normalizeEmail(email), otp }));
+      await withAuthFallback((client) => client.post('/api/v1/auth/verify-otp', { email: normalizeEmail(email), otp }));
       return true;
     } catch (error) {
       if (error?.response?.status === 404) {
@@ -357,7 +333,7 @@ export const authService = {
 
   async resetPassword(email, newPassword) {
     try {
-      await withAuthFallback((client) => client.post('/reset-password', { email: normalizeEmail(email), newPassword }));
+      await withAuthFallback((client) => client.post('/api/v1/auth/reset-password', { email: normalizeEmail(email), newPassword }));
       return true;
     } catch (error) {
       if (error?.response?.status === 404) {
@@ -367,20 +343,11 @@ export const authService = {
     }
   },
 
-  async changePassword(oldPassword, newPassword) {
-    try {
-      await withAuthFallback((client) => client.put('/change-password', { oldPassword, newPassword }));
-      return true;
-    } catch (error) {
-      throw new Error(getErrorMessage(error, 'Password change failed'));
-    }
-  },
-
   async logout() {
     const refreshToken = authStorage.getRefreshToken();
     try {
       if (refreshToken) {
-        await withAuthFallback((client) => client.post('/logout', { refreshToken }));
+        await withAuthFallback((client) => client.post('/api/v1/auth/logout', { refreshToken }));
       }
     } catch {
       // ignore network/logout errors and clear local session anyway
@@ -391,7 +358,7 @@ export const authService = {
 
   async getAllUsers() {
     try {
-      const response = await withAuthFallback((client) => client.get('/admin/users'));
+      const response = await withAuthFallback((client) => client.get('/api/v1/auth/admin/users'));
       const payload = getResponsePayload(response);
       const list = Array.isArray(payload) ? payload : payload.users || payload.content || [];
       return list.map(mapAnyUserToCurrentUser);
@@ -403,7 +370,7 @@ export const authService = {
   async updateUserRole(userIdOrEmail, role) {
     const identifier = encodeURIComponent(userIdOrEmail);
     try {
-      const response = await withAuthFallback((client) => client.put(`/admin/users/${identifier}/role`, {
+      const response = await withAuthFallback((client) => client.put(`/api/v1/auth/admin/users/${identifier}/role`, {
         role: toBackendRole(role)
       }));
       const payload = getResponsePayload(response);
@@ -418,7 +385,7 @@ export const authService = {
   async removeUserAccess(userIdOrEmail) {
     const identifier = encodeURIComponent(userIdOrEmail);
     try {
-      await withAuthFallback((client) => client.delete(`/admin/users/${identifier}`));
+      await withAuthFallback((client) => client.delete(`/api/v1/auth/admin/users/${identifier}`));
       return true;
     } catch (error) {
       throw new Error(getErrorMessage(error, 'Failed to remove user access in DB'));

@@ -3,17 +3,17 @@ import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
+  timeout: 60000
+});
+
 const REPORTING_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_REPORTING_BASE_URL, {
   defaultBaseUrl: API_ENDPOINTS.REPORTING
 })
   .filter((value, index, list) => list.indexOf(value) === index);
 const REPORTING_API_BASE_URLS = REPORTING_BASE_URLS.map((base) => toServiceBaseUrl(base, API_BASE_PATHS.REPORTING));
 let activeReportingBaseIndex = 0;
-
-const api = axios.create({
-  baseURL: REPORTING_API_BASE_URLS[0],
-  timeout: 60000
-});
 
 api.interceptors.request.use((config) => {
   const token = authStorage.getAccessToken();
