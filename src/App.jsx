@@ -43,6 +43,18 @@ import {
   LifeBuoy,
   MessageSquare
 } from 'lucide-react';
+useEffect(() => {
+  const services = [
+    'https://shipfast-gateway.onrender.com/actuator/health',
+    'https://shipfast-auth.onrender.com/actuator/health',
+    'https://shipfast-shipment.onrender.com/actuator/health',
+    'https://shipfast-admin.onrender.com/actuator/health',
+    'https://shipfast-operations.onrender.com/actuator/health',
+    'https://shipfast-comms.onrender.com/actuator/health',
+    'https://shipfast-reporting.onrender.com/actuator/health',
+  ];
+  services.forEach(url => fetch(url).catch(() => {}));
+}, []);
 
 function ProtectedRoute({ children, allowedRole }) {
   const { currentUser, isLoading, activeRole } = useShipment();
