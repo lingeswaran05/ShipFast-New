@@ -90,6 +90,9 @@ public class AuthController {
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(
             Authentication authentication) {
+        if(authentication == null){
+            throw new RuntimeException("Authentication is NULL");
+        }
 
         String email = authentication.getName();
 
