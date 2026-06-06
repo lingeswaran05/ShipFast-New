@@ -31,7 +31,13 @@ const withShipmentBaseFallback = async (requestFactory, options = {}) => {
     const index = (activeShipmentBaseIndex + offset) % SHIPMENT_BASE_URLS.length;
     setActiveShipmentBase(index);
     try {
-      return await requestFactory(api);
+      const response = await requestFactory(api);
+      if (response?.data && typeof response.data.status === 'boolean' && response.data.status === false) {
+        const error = new Error(response.data.message || 'API reported failure');
+        error.response = response;
+        throw error;
+      }
+      return response;
     } catch (error) {
       lastError = error;
       const shouldRetry = retryOnFailure && shouldRetryWithFallback(error) && offset < SHIPMENT_BASE_URLS.length - 1;
@@ -62,7 +68,7 @@ api.interceptors.request.use((config) => {
 const splitAddress = (value = '') => {
   const parts = String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
   if (parts.length === 0) return { doorAddress: '', city: '', state: '', pincode: '', address: '' };
-  if (parts.length === 1) return { doorAddress: parts[0], city: '', state: '', pincode: '', address: parts[0] };
+  if (parts.length === 1) return { doorAddress: parts[0], city: '', state: '', pincode: parts[0], address: parts[0] };
   if (parts.length === 2) {
     const secondLooksLikePincode = /^[0-9]{4,8}$/.test(parts[1]);
     if (secondLooksLikePincode) {
@@ -163,15 +169,32 @@ const defaultPricingConfig = () => ({
   codHandlingFee: 50
 });
 
+const parseDateSafely = (value) => {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    if (value.length >= 3) {
+      return new Date(value[0], value[1] - 1, value[2], value[3] || 0, value[4] || 0, value[5] || 0);
+    }
+    return null;
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 const mapShipment = (shipment = {}) => {
+  console.log('MAP INPUT', shipment);
   const sender = shipment.sender || {};
   const receiver = shipment.recipient || shipment.receiver || {};
   const senderRawAddress = sender.addressLine || sender.address || '';
   const receiverRawAddress = receiver.addressLine || receiver.address || '';
   const senderParsed = splitAddress(senderRawAddress);
   const receiverParsed = splitAddress(receiverRawAddress);
-  const createdAt = shipment.createdAt ? new Date(shipment.createdAt) : new Date();
-  const deliveredAt = shipment.deliveredAt ? new Date(shipment.deliveredAt) : null;
+  
+  const parsedCreatedAt = parseDateSafely(shipment.createdAt);
+  const createdAt = parsedCreatedAt || new Date();
+  
+  const deliveredAt = parseDateSafely(shipment.deliveredAt);
+  
   const paymentMode = shipment.paymentMethod || shipment.paymentMode || 'ONLINE';
   const normalizedStatus = normalizeShipmentStatus(shipment.status);
   const hasCollectedAt = Boolean(shipment.paymentCollectedAt);
@@ -194,7 +217,7 @@ const mapShipment = (shipment = {}) => {
       status: normalizeShipmentStatus(event.status),
       location: event.location || '',
       remarks: event.remarks || '',
-      timestamp: event.timestamp || null
+      timestamp: parseDateSafely(event.timestamp)
     }))
     : [];
   const originValue = shipment.origin || [senderAddress, originCity].filter(Boolean).join(', ');
@@ -203,7 +226,7 @@ const mapShipment = (shipment = {}) => {
   const trackingValue = shipment.trackingNumber || shipment.trackingId || databaseId;
   const runSheetId = shipment.runSheetId || shipment.runsheetId || shipment.runSheetNumber || shipment.sheetId || null;
 
-  return {
+  const mappedShipment = {
     id: trackingValue,
     shipmentId: databaseId || trackingValue,
     trackingId: trackingValue,
@@ -220,11 +243,11 @@ const mapShipment = (shipment = {}) => {
     type: shipment.serviceType || 'Standard',
     paymentMode,
     paymentStatus,
-    paymentCollectedAt: shipment.paymentCollectedAt || null,
+    paymentCollectedAt: parseDateSafely(shipment.paymentCollectedAt),
     cost: roundToRupee(shipment.cost ?? shipment.totalCost ?? 0),
     date: createdAt.toISOString().split('T')[0],
-    createdAt: shipment.createdAt || createdAt.toISOString(),
-    updatedAt: shipment.updatedAt || shipment.createdAt || createdAt.toISOString(),
+    createdAt: createdAt.toISOString(),
+    updatedAt: parseDateSafely(shipment.updatedAt || shipment.createdAt || new Date()).toISOString(),
     origin: originValue,
     destination: destinationValue,
     runSheetId,
@@ -258,6 +281,8 @@ const mapShipment = (shipment = {}) => {
     },
     weight: shipment.packageDetails?.weight || shipment.weight || 0
   };
+  console.log('MAP OUTPUT', mappedShipment);
+  return mappedShipment;
 };
 
 const getErrorMessage = (error, fallback) => (
@@ -311,8 +336,10 @@ export const shipmentService = {
           limit: filters.limit
         }
       }));
+      console.log('RAW RESPONSE getAllShipments', response);
       const payload = response?.data;
       const list = Array.isArray(payload) ? payload : payload?.data || payload?.content || [];
+      console.log('NORMALIZED LIST getAllShipments', list);
       return list.map(mapShipment);
     } catch (error) {
       if (isUnavailableError(error)) {
@@ -333,6 +360,7 @@ export const shipmentService = {
     if (identityList.length === 0) return [];
 
     const allowedIdentitySet = new Set(identityList.map(toIdentityValue).filter(Boolean));
+    console.log('getShipments identifiers', { requestedIdentifiers, fallbackIdentifier, identityList, allowedIdentitySet: [...allowedIdentitySet] });
     let collected = [];
     let lastError = null;
 
@@ -341,16 +369,29 @@ export const shipmentService = {
         const response = await withShipmentBaseFallback((client) => client.get('/mine', {
           params: { userId: identifier }
         }));
+        console.log('RAW RESPONSE getShipments', { identifier, response });
         const payload = response?.data;
         const list = Array.isArray(payload) ? payload : payload?.data || [];
+        console.log('NORMALIZED LIST getShipments', { identifier, list });
         collected = collected.concat(list.map(mapShipment));
       } catch (error) {
+        console.log('getShipments request failed', { identifier, error });
         lastError = error;
       }
     }
 
     if (collected.length > 0) {
-      return dedupeShipments(collected).filter((item) => matchesIdentity(item, allowedIdentitySet));
+      const deduped = dedupeShipments(collected);
+      const filtered = deduped.filter((item) => matchesIdentity(item, allowedIdentitySet));
+      console.log('getShipments post-filter', { deduped, filtered, allowedIdentitySet: [...allowedIdentitySet] });
+      if (filtered.length === 0 && deduped.length > 0) {
+        console.warn('getShipments identity filter removed all backend results, returning deduped backend list instead', {
+          deduped,
+          allowedIdentitySet: [...allowedIdentitySet]
+        });
+        return deduped;
+      }
+      return filtered;
     }
 
     if (!lastError) return [];
@@ -370,8 +411,10 @@ export const shipmentService = {
   async getShipmentByTracking(id) {
     try {
       const response = await withShipmentBaseFallback((client) => client.get(`/track/${encodeURIComponent(id)}`));
+      console.log('RAW RESPONSE getShipmentByTracking', { id, response });
       return mapShipment(response?.data);
     } catch (error) {
+      console.log('getShipmentByTracking failed', { id, error });
       throw new Error(getErrorMessage(error, 'Failed to load shipment'));
     }
   },
@@ -379,12 +422,16 @@ export const shipmentService = {
   async getShipmentByIdentifier(id) {
     if (!id) throw new Error('Shipment identifier is required');
     try {
+      console.log('getShipmentByIdentifier primary lookup', id);
       return await this.getShipmentByTracking(id);
     } catch {
       try {
+        console.log('getShipmentByIdentifier fallback lookup', id);
         const response = await withShipmentBaseFallback((client) => client.get(`/${encodeURIComponent(id)}`));
+        console.log('RAW RESPONSE getShipmentByIdentifier fallback', { id, response });
         return mapShipment(response?.data);
       } catch (error) {
+        console.log('getShipmentByIdentifier failed', { id, error });
         throw new Error(getErrorMessage(error, 'Failed to load shipment'));
       }
     }

@@ -129,6 +129,17 @@ export function MyShipments() {
 
   const visibleShipments = filteredShipments.slice(0, visibleCount);
 
+  useEffect(() => {
+    console.log('MyShipments render state', {
+      shipments,
+      shipmentsCount: shipments.length,
+      filteredShipments,
+      filteredCount: filteredShipments.length,
+      filter,
+      statusFilter
+    });
+  }, [shipments, filteredShipments, filter, statusFilter]);
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

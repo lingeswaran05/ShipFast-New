@@ -459,7 +459,7 @@ export function AdminDashboard({ view }) {
         return;
       }
 
-      // Fallback path: derive pending requests from operations profile data
+      /* Fallback path: derive pending requests from operations profile data
       // when role request endpoint is unavailable (e.g., 404) or returns empty.
       const customerCandidates = (users || []).filter((user) => String(user?.role || '').toLowerCase() === 'customer');
       const profileChecks = await Promise.allSettled(
@@ -514,7 +514,7 @@ export function AdminDashboard({ view }) {
         .filter((result) => result.status === 'fulfilled' && result.value)
         .map((result) => result.value);
 
-      setBackendPendingRequests(fallbackPending);
+      setBackendPendingRequests(fallbackPending); */
     };
 
     loadBackendPendingRequests();

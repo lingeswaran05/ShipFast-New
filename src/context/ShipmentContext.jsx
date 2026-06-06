@@ -124,7 +124,7 @@ const filterCustomerShipments = (shipments = [], user = {}) => {
   const allowedStableIds = new Set(getShipmentOwnerIdentifiers(user).map((value) => String(value || '').trim().toLowerCase()).filter(Boolean));
   const fallbackEmail = String(user?.email || '').trim().toLowerCase();
 
-  return (shipments || []).filter((shipment) => {
+  const filteredShipments = (shipments || []).filter((shipment) => {
     const customerIdIdentity = String(shipment?.customerId || shipment?.userId || shipment?.ownerId || '').trim().toLowerCase();
     if (allowedStableIds.size > 0) {
       return customerIdIdentity ? allowedStableIds.has(customerIdIdentity) : false;
@@ -133,6 +133,16 @@ const filterCustomerShipments = (shipments = [], user = {}) => {
     const emailIdentity = String(shipment?.customerEmail || shipment?.email || '').trim().toLowerCase();
     return Boolean(fallbackEmail) && emailIdentity === fallbackEmail;
   });
+  console.log('filterCustomerShipments', {
+    user,
+    allowedStableIds: [...allowedStableIds],
+    fallbackEmail,
+    inputCount: (shipments || []).length,
+    outputCount: filteredShipments.length,
+    shipments,
+    filteredShipments
+  });
+  return filteredShipments;
 };
 
 const isQuotaExceededError = (error) => (
@@ -571,13 +581,15 @@ export function ShipmentProvider({ children }) {
     try {
       setIsRefreshing(true);
       const role = normalizeRole(currentUser.role);
+      console.log('refreshShipments start', { currentUser, role });
       if (role === 'admin' || role === 'agent') {
         userShipments = await shipmentService.getAllShipments();
       } else {
         const ownerIdentifiers = getShipmentOwnerIdentifiers(currentUser);
+        console.log('refreshShipments ownerIdentifiers', ownerIdentifiers);
         userShipments = ownerIdentifiers.length > 0 ? await shipmentService.getShipments(ownerIdentifiers) : [];
-        userShipments = filterCustomerShipments(userShipments, currentUser);
       }
+      console.log('refreshShipments result', userShipments);
       didLoadSuccessfully = true;
     } catch (error) {
       console.warn('Failed to load shipments from backend, preserving last known shipment state', error);
@@ -672,7 +684,6 @@ export function ShipmentProvider({ children }) {
                   } else {
                     const ownerIdentifiers = getShipmentOwnerIdentifiers(user);
                     userShipments = ownerIdentifiers.length > 0 ? await shipmentService.getShipments(ownerIdentifiers) : [];
-                    userShipments = filterCustomerShipments(userShipments, user);
                   }
               } catch {
                   userShipments = [];
@@ -753,7 +764,6 @@ export function ShipmentProvider({ children }) {
         } else {
           const ownerIdentifiers = getShipmentOwnerIdentifiers(user);
           userShipments = ownerIdentifiers.length > 0 ? await shipmentService.getShipments(ownerIdentifiers) : [];
-          userShipments = filterCustomerShipments(userShipments, user);
         }
       } catch {
         userShipments = [];

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Package, MapPin, Clock, CheckCircle, Truck, ArrowLeft, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Logo } from '../ui/Logo';
@@ -77,10 +77,14 @@ export function TrackingPortal() {
   const [shipmentData, setShipmentData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const requestSequenceRef = useRef(0);
 
   const fetchShipment = async (id, options = {}) => {
     if (!id) return;
     const { silent = false } = options;
+    const requestId = requestSequenceRef.current + 1;
+    requestSequenceRef.current = requestId;
+    console.log('fetchShipment called', { id, silent, requestId, trackingNumber, currentShipmentData: shipmentData });
     if (!silent) {
       setIsLoading(true);
       setError(null);
@@ -88,16 +92,25 @@ export function TrackingPortal() {
 
     try {
       const data = await shipmentService.getShipmentByIdentifier(id);
+      if (requestSequenceRef.current !== requestId) {
+        console.log('fetchShipment stale success ignored', { id, silent, requestId, activeRequestId: requestSequenceRef.current });
+        return;
+      }
+      console.log('SETTING SHIPMENT DATA', data);
       setShipmentData(data);
       setError(null);
     } catch (err) {
-      console.error(err);
+      if (requestSequenceRef.current !== requestId) {
+        console.log('fetchShipment stale error ignored', { id, silent, requestId, activeRequestId: requestSequenceRef.current, err });
+        return;
+      }
+      console.error('fetchShipment failed', { id, silent, requestId, err });
       if (!silent) {
         setError('Shipment not found. Please check the tracking ID.');
         setShipmentData(null);
       }
     } finally {
-      if (!silent) {
+      if (!silent && requestSequenceRef.current === requestId) {
         setIsLoading(false);
       }
     }
@@ -105,23 +118,32 @@ export function TrackingPortal() {
 
   useEffect(() => {
     if (!queryTrackingId) return;
+    console.log('TrackingPortal query effect', { queryTrackingId });
     setTrackingNumber(queryTrackingId);
     fetchShipment(queryTrackingId, { silent: false });
   }, [queryTrackingId]);
 
   useEffect(() => {
     if (!trackingNumber) return;
+    console.log('TrackingPortal polling effect start', { trackingNumber });
     const interval = setInterval(() => {
+      console.log('TrackingPortal polling tick', { trackingNumber });
       fetchShipment(trackingNumber, { silent: true });
     }, 10000);
-    return () => clearInterval(interval);
+    return () => {
+      console.log('TrackingPortal polling effect cleanup', { trackingNumber });
+      clearInterval(interval);
+    };
   }, [trackingNumber]);
+
+  useEffect(() => {
+    console.log('CURRENT shipmentData', shipmentData);
+  }, [shipmentData]);
 
   const handleTrack = (e) => {
     e.preventDefault();
     if (!trackingNumber.trim()) return;
     const trimmed = trackingNumber.trim();
-    fetchShipment(trimmed, { silent: false });
     navigate(`/track?id=${encodeURIComponent(trimmed)}`, { replace: false });
   };
 
