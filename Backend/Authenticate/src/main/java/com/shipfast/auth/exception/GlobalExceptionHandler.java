@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
         }
 
         ApiResponse<Object> response =
-                new ApiResponse<>(false, "Something went wrong. Please try again.", null);
+                new ApiResponse<>(false, "Something went wrong. Please try again:"+ ex.getMessage(), null);
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
