@@ -14,6 +14,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -38,6 +43,8 @@ import com.shipfast.shipment.repository.PricingConfigRepository;
 import com.shipfast.shipment.repository.ShipmentRepository;
 import com.shipfast.shipment.service.EmailService;
 import com.shipfast.shipment.service.ShipmentService;
+
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class ShipmentServiceImpl implements ShipmentService {
@@ -149,39 +156,36 @@ public class ShipmentServiceImpl implements ShipmentService {
                                        Integer limit) {
         boolean paginate = limit != null && limit > 0;
         int pageNumber = page == null || page < 1 ? 0 : page - 1;
-        int pageSize = paginate ? limit : Integer.MAX_VALUE;
+        int pageSize = paginate ? limit : 2000; // Safety limit
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        List<Shipment> filtered = shipmentRepository.findAll().stream()
-                .filter(item -> !hasText(status) || (item.getStatus() != null && item.getStatus().equalsIgnoreCase(status)))
-                .filter(item -> !hasText(branchId) || (item.getBranchId() != null && item.getBranchId().equalsIgnoreCase(branchId)))
-                .filter(item -> {
-                    if (dateFrom == null && dateTo == null) {
-                        return true;
-                    }
-                    if (item.getCreatedAt() == null) {
-                        return false;
-                    }
-                    LocalDateTime from = dateFrom == null ? LocalDate.MIN.atStartOfDay() : dateFrom.atStartOfDay();
-                    LocalDateTime to = dateTo == null ? LocalDate.MAX.atTime(LocalTime.MAX) : dateTo.atTime(LocalTime.MAX);
-                    return !item.getCreatedAt().isBefore(from) && !item.getCreatedAt().isAfter(to);
-                })
-                .sorted(Comparator.comparing(Shipment::getCreatedAt,
-                    Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                .collect(Collectors.toList());
+        Specification<Shipment> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (hasText(status)) {
+                predicates.add(cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
+            }
+            if (hasText(branchId)) {
+                predicates.add(cb.equal(cb.lower(root.get("branchId")), branchId.toLowerCase()));
+            }
+            if (dateFrom != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), dateFrom.atStartOfDay()));
+            }
+            if (dateTo != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), dateTo.atTime(LocalTime.MAX)));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-        int fromIndex = paginate ? Math.min(pageNumber * pageSize, filtered.size()) : 0;
-        int toIndex = paginate ? Math.min(fromIndex + pageSize, filtered.size()) : filtered.size();
-        List<Shipment> pagedData = filtered.subList(fromIndex, toIndex);
-        int totalPages = paginate
-                ? (filtered.isEmpty() ? 0 : (int) Math.ceil((double) filtered.size() / pageSize))
-                : (filtered.isEmpty() ? 0 : 1);
+        Page<Shipment> shipmentPage = shipmentRepository.findAll(spec, pageable);
+        List<Shipment> pagedData = shipmentPage.getContent();
+        int totalPages = shipmentPage.getTotalPages();
 
         return ShipmentListResponse.builder()
                 .data(pagedData)
                 .pagination(ShipmentListResponse.Pagination.builder()
-                        .totalItems(filtered.size())
+                        .totalItems(shipmentPage.getTotalElements())
                         .totalPages(totalPages)
-                        .currentPage(paginate ? pageNumber + 1 : 1)
+                        .currentPage(pageNumber + 1)
                         .build())
                 .build();
     }
@@ -191,7 +195,7 @@ public class ShipmentServiceImpl implements ShipmentService {
         if (!hasText(customerId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "customerId is required");
         }
-        return shipmentRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+        return shipmentRepository.findByCustomerIdOrSenderEmailOrderByCreatedAtDesc(customerId, customerId);
     }
 
     @Override

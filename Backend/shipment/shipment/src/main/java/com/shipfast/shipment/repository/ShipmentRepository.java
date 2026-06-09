@@ -17,6 +17,9 @@ public interface ShipmentRepository extends MongoRepository<Shipment, String> {
 
     List<Shipment> findByCustomerIdOrderByCreatedAtDesc(String customerId);
 
+    // Added for more robust customer shipment lookup
+    List<Shipment> findByCustomerIdOrSenderEmailOrderByCreatedAtDesc(String customerId, String senderEmail);
+
     Page<Shipment> findByStatusIgnoreCase(String status, Pageable pageable);
 
     Page<Shipment> findByBranchIdIgnoreCase(String branchId, Pageable pageable);
