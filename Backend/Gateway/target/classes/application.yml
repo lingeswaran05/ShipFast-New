@@ -25,7 +25,7 @@ spring:
         - id: auth-service
           uri: ${AUTH_SERVICE_URL}
           predicates:
-            - Path=/api/v1/auth/**,/api/auth/**
+            - Path=/api/v1/auth/**,/api/auth/**,/api/v1/roles/**,/api/roles/**
         - id: shipment-service
           uri: ${SHIPMENT_SERVICE_URL}
           predicates:
@@ -54,3 +54,4 @@ management:
   endpoint:
     health:
       show-details: always
+

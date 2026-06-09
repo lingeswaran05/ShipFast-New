@@ -5,20 +5,21 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -44,8 +45,6 @@ import com.shipfast.shipment.repository.ShipmentRepository;
 import com.shipfast.shipment.service.EmailService;
 import com.shipfast.shipment.service.ShipmentService;
 
-import jakarta.persistence.criteria.Predicate;
-
 @Service
 public class ShipmentServiceImpl implements ShipmentService {
 
@@ -63,6 +62,7 @@ public class ShipmentServiceImpl implements ShipmentService {
     private final PricingConfigRepository pricingConfigRepository;
     private final EmailService emailService;
     private final InvoiceService invoiceService;
+    private final MongoTemplate mongoTemplate;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${operations.service.url}")
@@ -89,11 +89,13 @@ public class ShipmentServiceImpl implements ShipmentService {
     public ShipmentServiceImpl(ShipmentRepository shipmentRepository,
                                PricingConfigRepository pricingConfigRepository,
                                EmailService emailService,
-                               InvoiceService invoiceService) {
+                               InvoiceService invoiceService,
+                               MongoTemplate mongoTemplate) {
         this.shipmentRepository = shipmentRepository;
         this.pricingConfigRepository = pricingConfigRepository;
         this.emailService = emailService;
         this.invoiceService = invoiceService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -159,32 +161,36 @@ public class ShipmentServiceImpl implements ShipmentService {
         int pageSize = paginate ? limit : 2000; // Safety limit
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Specification<Shipment> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (hasText(status)) {
-                predicates.add(cb.equal(cb.lower(root.get("status")), status.toLowerCase()));
-            }
-            if (hasText(branchId)) {
-                predicates.add(cb.equal(cb.lower(root.get("branchId")), branchId.toLowerCase()));
-            }
-            if (dateFrom != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), dateFrom.atStartOfDay()));
-            }
-            if (dateTo != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), dateTo.atTime(LocalTime.MAX)));
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+        Query query = new Query().with(pageable);
+        List<Criteria> criteria = new ArrayList<>();
 
-        Page<Shipment> shipmentPage = shipmentRepository.findAll(spec, pageable);
-        List<Shipment> pagedData = shipmentPage.getContent();
-        int totalPages = shipmentPage.getTotalPages();
+        if (hasText(status)) {
+            criteria.add(Criteria.where("status").is(status));
+        }
+        if (hasText(branchId)) {
+            criteria.add(Criteria.where("branchId").is(branchId));
+        }
+        if (dateFrom != null) {
+            criteria.add(Criteria.where("createdAt").gte(dateFrom.atStartOfDay()));
+        }
+        if (dateTo != null) {
+            criteria.add(Criteria.where("createdAt").lte(dateTo.atTime(LocalTime.MAX)));
+        }
+
+        if (!criteria.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
+        }
+
+        long count = mongoTemplate.count(query, Shipment.class);
+        List<Shipment> shipments = mongoTemplate.find(query, Shipment.class);
+
+        Page<Shipment> shipmentPage = new PageImpl<>(shipments, pageable, count);
 
         return ShipmentListResponse.builder()
-                .data(pagedData)
+                .data(shipmentPage.getContent())
                 .pagination(ShipmentListResponse.Pagination.builder()
                         .totalItems(shipmentPage.getTotalElements())
-                        .totalPages(totalPages)
+                        .totalPages(shipmentPage.getTotalPages())
                         .currentPage(pageNumber + 1)
                         .build())
                 .build();
