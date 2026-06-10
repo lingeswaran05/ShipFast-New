@@ -32,6 +32,7 @@ import com.shipfast.shipment.service.ShipmentService;
 
 @RestController
 @RequestMapping("/api/v1/shipments")
+
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
