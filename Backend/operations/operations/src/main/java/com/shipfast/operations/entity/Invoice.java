@@ -24,4 +24,5 @@ public class Invoice {
     private String paymentStatus;
 
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -236,6 +236,7 @@ public class AuthServiceImpl implements AuthService {
         profile.setCity(request.getCity());
         profile.setState(request.getState());
         profile.setPincode(request.getPincode());
+        profile.setUpdatedAt(LocalDateTime.now());
 
         userProfileRepository.save(profile);
 

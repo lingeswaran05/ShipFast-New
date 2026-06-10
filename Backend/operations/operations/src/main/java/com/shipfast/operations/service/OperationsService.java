@@ -26,6 +26,7 @@ import com.shipfast.operations.dto.InvoiceResponse;
 import com.shipfast.operations.dto.RunSheetRequest;
 import com.shipfast.operations.dto.RunSheetResponse;
 import com.shipfast.operations.dto.ScanRequest;
+import com.shipfast.operations.entity.AgentAvailability;
 import com.shipfast.operations.entity.AgentProfile;
 import com.shipfast.operations.entity.CashCollection;
 import com.shipfast.operations.entity.DeliveryScan;
@@ -97,20 +98,19 @@ public class OperationsService {
                 .toList();
     }
 
-        private boolean isEligibleForAssignment(AgentProfile agent) {
+    private boolean isEligibleForAssignment(AgentProfile agent) {
         if (agent == null) return false;
         String verification = String.valueOf(agent.getVerificationStatus() == null ? "" : agent.getVerificationStatus()).trim().toUpperCase();
         if ("REJECTED".equals(verification)) return false;
 
         String availability = String.valueOf(agent.getAvailabilityStatus() == null ? "" : agent.getAvailabilityStatus()).trim().toUpperCase();
-        return "AVAILABLE".equals(availability)
-            || "ACTIVE".equals(availability)
-            || "READY".equals(availability)
-            || "IN_TRANSIT".equals(availability)
-            || "ONLINE".equals(availability)
-            || "LOGGED_IN".equals(availability)
-            || "LOGGED-IN".equals(availability);
+        try {
+            AgentAvailability status = AgentAvailability.valueOf(availability);
+            return status.isEligibleForAssignment();
+        } catch (IllegalArgumentException e) {
+            return false;
         }
+    }
 
     private AgentResponse mapToAgentResponse(AgentProfile agent) {
         return AgentResponse.builder()
@@ -347,6 +347,8 @@ public class OperationsService {
     }
 
     public RunSheetResponse createRunSheet(RunSheetRequest request) {
+        agentRepo.findByAgentId(request.getAgentId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Agent not found"));
 
         RunSheet runSheet = RunSheet.builder()
                 .runSheetId("RS-" + UUID.randomUUID().toString().substring(0,6))
@@ -354,6 +356,8 @@ public class OperationsService {
                 .hubId(request.getHubId())
                 .date(LocalDate.now())
                 .shipmentIds(request.getShipmentTrackingNumbers())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         runSheetRepo.save(Objects.requireNonNull(runSheet));
@@ -395,6 +399,8 @@ public class OperationsService {
     }
 
     public void scanShipment(ScanRequest request) {
+        agentRepo.findByAgentId(request.getAgentId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Agent not found"));
 
         try {
             restTemplate.patchForObject(
@@ -413,7 +419,8 @@ public class OperationsService {
                 .shipmentId(request.getShipmentTrackingNumber())
                 .agentId(request.getAgentId())
                 .status(request.getStatus())
-                .scannedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .remarks("Scanned by agent")
                 .build();
 
@@ -437,7 +444,8 @@ public class OperationsService {
                 .totalAmount(total)
                 .verified(false)
                 .depositedToBank(false)
-                .timestamp(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         cashRepo.save(Objects.requireNonNull(collection));
@@ -451,6 +459,7 @@ public class OperationsService {
                 .orElseThrow(() -> new RuntimeException("Collection not found"));
 
         collection.setVerified(true);
+        collection.setUpdatedAt(LocalDateTime.now());
         cashRepo.save(Objects.requireNonNull(collection));
 
         return mapToCashResponse(collection);
@@ -463,7 +472,7 @@ public class OperationsService {
                 .totalAmount(c.getTotalAmount())
                 .verified(c.isVerified())
                 .depositedToBank(c.isDepositedToBank())
-                .timestamp(c.getTimestamp())
+                .createdAt(c.getCreatedAt())
                 .build();
     }
 
@@ -482,6 +491,7 @@ public class OperationsService {
                 .paymentMode(request.getPaymentMode())
                 .paymentStatus("PAID")
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         invoiceRepo.save(Objects.requireNonNull(invoice));

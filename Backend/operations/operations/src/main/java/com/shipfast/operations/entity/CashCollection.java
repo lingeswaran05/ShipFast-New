@@ -24,5 +24,6 @@ public class CashCollection {
     private boolean verified;
     private boolean depositedToBank;
 
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

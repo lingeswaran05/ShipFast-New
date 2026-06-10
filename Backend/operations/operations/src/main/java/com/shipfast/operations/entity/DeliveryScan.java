@@ -18,6 +18,8 @@ public class DeliveryScan {
     private String shipmentId;
     private String agentId;
     private String status;
-    private LocalDateTime scannedAt;
     private String remarks;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
