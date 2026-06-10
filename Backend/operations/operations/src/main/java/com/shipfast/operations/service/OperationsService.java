@@ -38,10 +38,7 @@ import com.shipfast.operations.repository.DeliveryScanRepository;
 import com.shipfast.operations.repository.InvoiceRepository;
 import com.shipfast.operations.repository.RunSheetRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class OperationsService {
 
     private final AgentRepository agentRepo;
@@ -54,6 +51,20 @@ public class OperationsService {
     @Value("${shipment.service.url}")
     private String shipmentServiceUrl;
 
+    public OperationsService(AgentRepository agentRepo,
+                             RunSheetRepository runSheetRepo,
+                             DeliveryScanRepository scanRepo,
+                             CashCollectionRepository cashRepo,
+                             InvoiceRepository invoiceRepo,
+                             RestTemplate restTemplate) {
+        this.agentRepo = agentRepo;
+        this.runSheetRepo = runSheetRepo;
+        this.scanRepo = scanRepo;
+        this.cashRepo = cashRepo;
+        this.invoiceRepo = invoiceRepo;
+        this.restTemplate = restTemplate;
+    }
+
     private String shipmentApiBaseUrl() {
         return appendPathIfMissing(shipmentServiceUrl, "/api/v1/shipments");
     }
@@ -61,28 +72,26 @@ public class OperationsService {
 
 
     public AgentResponse createAgent(AgentRequest request) {
-
-        AgentProfile agent = AgentProfile.builder()
-                .agentId("AG-" + UUID.randomUUID().toString().substring(0,6))
-                .userId(request.getUserId())
-                .licenseNumber(request.getLicenseNumber())
-                .vehicleNumber(request.getVehicleNumber())
-                .rcBookNumber(request.getRcBookNumber())
-                .aadharNumber(request.getAadharNumber())
-                .bloodType(request.getBloodType())
-                .organDonor(Boolean.FALSE)
-                .shiftTiming(request.getShiftTiming())
-                .joinDate(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .verificationStatus("PENDING")
-                .successRate(100.0)
-                .averageRating(0.0)
-                .totalRatings(0L)
-                .availabilityStatus("OFFLINE")
-                .deliveredCount(0L)
-                .failedCount(0L)
-                .inTransitCount(0L)
-                .build();
+        AgentProfile agent = new AgentProfile();
+        agent.setAgentId("AG-" + UUID.randomUUID().toString().substring(0, 6));
+        agent.setUserId(request.getUserId());
+        agent.setLicenseNumber(request.getLicenseNumber());
+        agent.setVehicleNumber(request.getVehicleNumber());
+        agent.setRcBookNumber(request.getRcBookNumber());
+        agent.setAadharNumber(request.getAadharNumber());
+        agent.setBloodType(request.getBloodType());
+        agent.setOrganDonor(Boolean.FALSE);
+        agent.setShiftTiming(request.getShiftTiming());
+        agent.setJoinDate(LocalDateTime.now());
+        agent.setUpdatedAt(LocalDateTime.now());
+        agent.setVerificationStatus("PENDING");
+        agent.setSuccessRate(100.0);
+        agent.setAverageRating(0.0);
+        agent.setTotalRatings(0L);
+        agent.setAvailabilityStatus("OFFLINE");
+        agent.setDeliveredCount(0L);
+        agent.setFailedCount(0L);
+        agent.setInTransitCount(0L);
 
         agentRepo.save(Objects.requireNonNull(agent));
 
@@ -113,17 +122,17 @@ public class OperationsService {
     }
 
     private AgentResponse mapToAgentResponse(AgentProfile agent) {
-        return AgentResponse.builder()
-                .agentId(agent.getAgentId())
-                .userId(agent.getUserId())
-            .availabilityStatus(agent.getAvailabilityStatus() != null ? agent.getAvailabilityStatus().toUpperCase() : "OFFLINE")
-            .verificationStatus(agent.getVerificationStatus() != null ? agent.getVerificationStatus().toUpperCase() : "PENDING")
-                .shiftTiming(agent.getShiftTiming())
-                .successRate(agent.getSuccessRate())
-                .averageRating(agent.getAverageRating())
-                .totalRatings(agent.getTotalRatings())
-                .joinDate(agent.getJoinDate())
-                .build();
+        AgentResponse response = new AgentResponse();
+        response.setAgentId(agent.getAgentId());
+        response.setUserId(agent.getUserId());
+        response.setAvailabilityStatus(agent.getAvailabilityStatus() != null ? agent.getAvailabilityStatus().toUpperCase() : "OFFLINE");
+        response.setVerificationStatus(agent.getVerificationStatus() != null ? agent.getVerificationStatus().toUpperCase() : "PENDING");
+        response.setShiftTiming(agent.getShiftTiming());
+        response.setSuccessRate(agent.getSuccessRate());
+        response.setAverageRating(agent.getAverageRating());
+        response.setTotalRatings(agent.getTotalRatings());
+        response.setJoinDate(agent.getJoinDate());
+        return response;
     }
 
     public AgentProfileResponse getAgentProfileByUserId(String userId) {
@@ -175,19 +184,20 @@ public class OperationsService {
             // Keep the existing profile and merge the latest documents/details below.
         }
 
-        AgentProfile profile = existing != null ? existing : AgentProfile.builder()
-                        .agentId("AG-" + UUID.randomUUID().toString().substring(0, 6))
-                        .userId(userId)
-                        .joinDate(LocalDateTime.now())
-                        .verificationStatus("PENDING")
-                        .successRate(100.0)
-                        .averageRating(0.0)
-                        .totalRatings(0L)
-                        .availabilityStatus("OFFLINE")
-                        .deliveredCount(0L)
-                        .failedCount(0L)
-                        .inTransitCount(0L)
-                        .build();
+        AgentProfile profile = existing != null ? existing : new AgentProfile();
+        if (existing == null) {
+            profile.setAgentId("AG-" + UUID.randomUUID().toString().substring(0, 6));
+            profile.setUserId(userId);
+            profile.setJoinDate(LocalDateTime.now());
+            profile.setVerificationStatus("PENDING");
+            profile.setSuccessRate(100.0);
+            profile.setAverageRating(0.0);
+            profile.setTotalRatings(0L);
+            profile.setAvailabilityStatus("OFFLINE");
+            profile.setDeliveredCount(0L);
+            profile.setFailedCount(0L);
+            profile.setInTransitCount(0L);
+        }
 
         if (request.getLicenseNumber() != null) profile.setLicenseNumber(request.getLicenseNumber());
         if (request.getAadharNumber() != null) profile.setAadharNumber(request.getAadharNumber());
@@ -224,19 +234,21 @@ public class OperationsService {
 
     public AgentProfileResponse verifyAgentProfile(String userId, AgentVerificationRequest request) {
         AgentProfile profile = agentRepo.findByUserId(userId)
-                .orElseGet(() -> AgentProfile.builder()
-                        .agentId("AG-" + UUID.randomUUID().toString().substring(0, 6))
-                        .userId(userId)
-                        .joinDate(LocalDateTime.now())
-                        .verificationStatus("PENDING")
-                        .successRate(100.0)
-                        .averageRating(0.0)
-                        .totalRatings(0L)
-                        .availabilityStatus("OFFLINE")
-                        .deliveredCount(0L)
-                        .failedCount(0L)
-                        .inTransitCount(0L)
-                        .build());
+            .orElseGet(() -> {
+                AgentProfile created = new AgentProfile();
+                created.setAgentId("AG-" + UUID.randomUUID().toString().substring(0, 6));
+                created.setUserId(userId);
+                created.setJoinDate(LocalDateTime.now());
+                created.setVerificationStatus("PENDING");
+                created.setSuccessRate(100.0);
+                created.setAverageRating(0.0);
+                created.setTotalRatings(0L);
+                created.setAvailabilityStatus("OFFLINE");
+                created.setDeliveredCount(0L);
+                created.setFailedCount(0L);
+                created.setInTransitCount(0L);
+                return created;
+            });
 
         // If an explicit status override is supplied (e.g., "CANCELLED"), use it directly.
         String explicitStatus = request != null && request.getVerificationStatus() != null
@@ -310,33 +322,33 @@ public class OperationsService {
     }
 
     private AgentProfileResponse mapToAgentProfileResponse(AgentProfile profile) {
-        return AgentProfileResponse.builder()
-                .agentId(profile.getAgentId())
-                .userId(profile.getUserId())
-                .licenseNumber(profile.getLicenseNumber())
-                .vehicleNumber(profile.getVehicleNumber())
-                .rcBookNumber(profile.getRcBookNumber())
-                .bloodType(profile.getBloodType())
-                .organDonor(profile.getOrganDonor())
-                .shiftTiming(profile.getShiftTiming())
-                .successRate(profile.getSuccessRate())
-                .joinDate(profile.getJoinDate())
-                .updatedAt(profile.getUpdatedAt())
-                .verificationStatus(profile.getVerificationStatus())
-                .verifiedBy(profile.getVerifiedBy())
-                .verifiedAt(profile.getVerifiedAt())
-                .verificationNotes(profile.getVerificationNotes())
-                .averageRating(profile.getAverageRating() != null ? profile.getAverageRating().doubleValue() : 0.0)
-                .totalRatings(profile.getTotalRatings() != null ? profile.getTotalRatings().longValue() : 0L)
-                .profileImage(profile.getProfileImage())
-                .aadharCopy(profile.getAadharCopy())
-                .licenseCopy(profile.getLicenseCopy())
-                .rcBookCopy(profile.getRcBookCopy())
-                .availabilityStatus(profile.getAvailabilityStatus() != null ? profile.getAvailabilityStatus() : "OFFLINE")
-                .deliveredCount(profile.getDeliveredCount() != null ? profile.getDeliveredCount() : 0L)
-                .failedCount(profile.getFailedCount() != null ? profile.getFailedCount() : 0L)
-                .inTransitCount(profile.getInTransitCount() != null ? profile.getInTransitCount() : 0L)
-                .build();
+        AgentProfileResponse response = new AgentProfileResponse();
+        response.setAgentId(profile.getAgentId());
+        response.setUserId(profile.getUserId());
+        response.setLicenseNumber(profile.getLicenseNumber());
+        response.setVehicleNumber(profile.getVehicleNumber());
+        response.setRcBookNumber(profile.getRcBookNumber());
+        response.setBloodType(profile.getBloodType());
+        response.setOrganDonor(profile.getOrganDonor());
+        response.setShiftTiming(profile.getShiftTiming());
+        response.setSuccessRate(profile.getSuccessRate());
+        response.setJoinDate(profile.getJoinDate());
+        response.setUpdatedAt(profile.getUpdatedAt());
+        response.setVerificationStatus(profile.getVerificationStatus());
+        response.setVerifiedBy(profile.getVerifiedBy());
+        response.setVerifiedAt(profile.getVerifiedAt());
+        response.setVerificationNotes(profile.getVerificationNotes());
+        response.setAverageRating(profile.getAverageRating() != null ? profile.getAverageRating().doubleValue() : 0.0);
+        response.setTotalRatings(profile.getTotalRatings() != null ? profile.getTotalRatings().longValue() : 0L);
+        response.setProfileImage(profile.getProfileImage());
+        response.setAadharCopy(profile.getAadharCopy());
+        response.setLicenseCopy(profile.getLicenseCopy());
+        response.setRcBookCopy(profile.getRcBookCopy());
+        response.setAvailabilityStatus(profile.getAvailabilityStatus() != null ? profile.getAvailabilityStatus() : "OFFLINE");
+        response.setDeliveredCount(profile.getDeliveredCount() != null ? profile.getDeliveredCount() : 0L);
+        response.setFailedCount(profile.getFailedCount() != null ? profile.getFailedCount() : 0L);
+        response.setInTransitCount(profile.getInTransitCount() != null ? profile.getInTransitCount() : 0L);
+        return response;
     }
 
     private AgentProfile resolveAgentProfile(String agentIdentifier) {
@@ -347,18 +359,17 @@ public class OperationsService {
     }
 
     public RunSheetResponse createRunSheet(RunSheetRequest request) {
-        agentRepo.findByAgentId(request.getAgentId())
+        agentRepo.findById(request.getAgentId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Agent not found"));
 
-        RunSheet runSheet = RunSheet.builder()
-                .runSheetId("RS-" + UUID.randomUUID().toString().substring(0,6))
-                .agentId(request.getAgentId())
-                .hubId(request.getHubId())
-                .date(LocalDate.now())
-                .shipmentIds(request.getShipmentTrackingNumbers())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        RunSheet runSheet = new RunSheet();
+        runSheet.setRunSheetId("RS-" + UUID.randomUUID().toString().substring(0, 6));
+        runSheet.setAgentId(request.getAgentId());
+        runSheet.setHubId(request.getHubId());
+        runSheet.setDate(LocalDate.now());
+        runSheet.setShipmentIds(request.getShipmentTrackingNumbers());
+        runSheet.setCreatedAt(LocalDateTime.now());
+        runSheet.setUpdatedAt(LocalDateTime.now());
 
         runSheetRepo.save(Objects.requireNonNull(runSheet));
         if (request.getShipmentTrackingNumbers() != null) {
@@ -375,31 +386,33 @@ public class OperationsService {
             }
         }
 
-        return RunSheetResponse.builder()
-                .runSheetId(runSheet.getRunSheetId())
-                .agentId(runSheet.getAgentId())
-                .hubId(runSheet.getHubId())
-                .date(runSheet.getDate())
-                .shipmentTrackingNumbers(runSheet.getShipmentIds())
-                .build();
+        RunSheetResponse response = new RunSheetResponse();
+        response.setRunSheetId(runSheet.getRunSheetId());
+        response.setAgentId(runSheet.getAgentId());
+        response.setHubId(runSheet.getHubId());
+        response.setDate(runSheet.getDate());
+        response.setShipmentTrackingNumbers(runSheet.getShipmentIds());
+        return response;
     }
 
     public List<RunSheetResponse> getRunSheetsByAgent(String agentId) {
 
         return runSheetRepo.findByAgentId(agentId)
                 .stream()
-                .map(rs -> RunSheetResponse.builder()
-                        .runSheetId(rs.getRunSheetId())
-                        .agentId(rs.getAgentId())
-                        .hubId(rs.getHubId())
-                        .date(rs.getDate())
-                        .shipmentTrackingNumbers(rs.getShipmentIds())
-                        .build())
+                .map(rs -> {
+                    RunSheetResponse response = new RunSheetResponse();
+                    response.setRunSheetId(rs.getRunSheetId());
+                    response.setAgentId(rs.getAgentId());
+                    response.setHubId(rs.getHubId());
+                    response.setDate(rs.getDate());
+                    response.setShipmentTrackingNumbers(rs.getShipmentIds());
+                    return response;
+                })
                 .toList();
     }
 
     public void scanShipment(ScanRequest request) {
-        agentRepo.findByAgentId(request.getAgentId())
+        agentRepo.findById(request.getAgentId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Agent not found"));
 
         try {
@@ -414,15 +427,14 @@ public class OperationsService {
             // scan should still be recorded even if status call fails
         }
 
-        DeliveryScan scan = DeliveryScan.builder()
-                .scanId(UUID.randomUUID().toString())
-                .shipmentId(request.getShipmentTrackingNumber())
-                .agentId(request.getAgentId())
-                .status(request.getStatus())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .remarks("Scanned by agent")
-                .build();
+        DeliveryScan scan = new DeliveryScan();
+        scan.setScanId(UUID.randomUUID().toString());
+        scan.setShipmentId(request.getShipmentTrackingNumber());
+        scan.setAgentId(request.getAgentId());
+        scan.setStatus(request.getStatus());
+        scan.setCreatedAt(LocalDateTime.now());
+        scan.setUpdatedAt(LocalDateTime.now());
+        scan.setRemarks("Scanned by agent");
 
         scanRepo.save(Objects.requireNonNull(scan));
     }
@@ -435,18 +447,17 @@ public class OperationsService {
                 + request.getUpiAmount()
                 + request.getCardAmount();
 
-        CashCollection collection = CashCollection.builder()
-                .collectionId("CC-" + UUID.randomUUID().toString().substring(0,6))
-                .shipmentId(request.getShipmentTrackingNumber())
-                .codAmount(request.getCodAmount())
-                .upiAmount(request.getUpiAmount())
-                .cardAmount(request.getCardAmount())
-                .totalAmount(total)
-                .verified(false)
-                .depositedToBank(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        CashCollection collection = new CashCollection();
+        collection.setCollectionId("CC-" + UUID.randomUUID().toString().substring(0, 6));
+        collection.setShipmentId(request.getShipmentTrackingNumber());
+        collection.setCodAmount(request.getCodAmount());
+        collection.setUpiAmount(request.getUpiAmount());
+        collection.setCardAmount(request.getCardAmount());
+        collection.setTotalAmount(total);
+        collection.setVerified(false);
+        collection.setDepositedToBank(false);
+        collection.setCreatedAt(LocalDateTime.now());
+        collection.setUpdatedAt(LocalDateTime.now());
 
         cashRepo.save(Objects.requireNonNull(collection));
 
@@ -466,14 +477,14 @@ public class OperationsService {
     }
 
     private CashCollectionResponse mapToCashResponse(CashCollection c) {
-        return CashCollectionResponse.builder()
-                .collectionId(c.getCollectionId())
-                                .shipmentTrackingNumber(c.getShipmentId())
-                .totalAmount(c.getTotalAmount())
-                .verified(c.isVerified())
-                .depositedToBank(c.isDepositedToBank())
-                .createdAt(c.getCreatedAt())
-                .build();
+        CashCollectionResponse response = new CashCollectionResponse();
+        response.setCollectionId(c.getCollectionId());
+        response.setShipmentTrackingNumber(c.getShipmentId());
+        response.setTotalAmount(c.getTotalAmount());
+        response.setVerified(c.isVerified());
+        response.setDepositedToBank(c.isDepositedToBank());
+        response.setTimestamp(c.getCreatedAt());
+        return response;
     }
 
 
@@ -482,27 +493,26 @@ public class OperationsService {
 
         double total = request.getBaseRate() + request.getTaxAndFees();
 
-        Invoice invoice = Invoice.builder()
-                .invoiceId("INV-" + UUID.randomUUID().toString().substring(0,6))
-                .shipmentTrackingNumber(request.getShipmentTrackingNumber())
-                .baseRate(request.getBaseRate())
-                .taxAndFees(request.getTaxAndFees())
-                .totalAmount(total)
-                .paymentMode(request.getPaymentMode())
-                .paymentStatus("PAID")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId("INV-" + UUID.randomUUID().toString().substring(0, 6));
+        invoice.setShipmentTrackingNumber(request.getShipmentTrackingNumber());
+        invoice.setBaseRate(request.getBaseRate());
+        invoice.setTaxAndFees(request.getTaxAndFees());
+        invoice.setTotalAmount(total);
+        invoice.setPaymentMode(request.getPaymentMode());
+        invoice.setPaymentStatus("PAID");
+        invoice.setCreatedAt(LocalDateTime.now());
+        invoice.setUpdatedAt(LocalDateTime.now());
 
         invoiceRepo.save(Objects.requireNonNull(invoice));
 
-        return InvoiceResponse.builder()
-                .invoiceId(invoice.getInvoiceId())
-                .shipmentTrackingNumber(invoice.getShipmentTrackingNumber())
-                .totalAmount(invoice.getTotalAmount())
-                .paymentStatus(invoice.getPaymentStatus())
-                .createdAt(invoice.getCreatedAt())
-                .build();
+        InvoiceResponse response = new InvoiceResponse();
+        response.setInvoiceId(invoice.getInvoiceId());
+        response.setShipmentTrackingNumber(invoice.getShipmentTrackingNumber());
+        response.setTotalAmount(invoice.getTotalAmount());
+        response.setPaymentStatus(invoice.getPaymentStatus());
+        response.setCreatedAt(invoice.getCreatedAt());
+        return response;
     }
 
     private String appendPathIfMissing(String baseUrl, String path) {

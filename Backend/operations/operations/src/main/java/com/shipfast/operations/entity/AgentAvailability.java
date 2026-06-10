@@ -7,7 +7,6 @@ public enum AgentAvailability {
     IN_TRANSIT,
     ONLINE,
     LOGGED_IN,
-    LOGGED_IN,
     OFFLINE,
     UNAVAILABLE;
 

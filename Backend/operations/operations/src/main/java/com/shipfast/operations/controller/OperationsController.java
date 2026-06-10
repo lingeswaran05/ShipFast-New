@@ -2,7 +2,6 @@ package com.shipfast.operations.controller;
 
 import com.shipfast.operations.dto.*;
 import com.shipfast.operations.service.OperationsService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,10 +10,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/operations")
-@RequiredArgsConstructor
 public class OperationsController {
 
     private final OperationsService service;
+
+    public OperationsController(OperationsService service) {
+        this.service = service;
+    }
 
     @PostMapping("/agents")
     public AgentResponse createAgent(@RequestBody AgentRequest request) {

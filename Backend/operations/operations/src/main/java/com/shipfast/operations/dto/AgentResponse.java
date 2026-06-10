@@ -1,12 +1,7 @@
 package com.shipfast.operations.dto;
 
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 
-@Data
-@Builder
 public class AgentResponse {
 
     private String agentId;
@@ -18,4 +13,23 @@ public class AgentResponse {
     private Double averageRating;
     private Long totalRatings;
     private LocalDateTime joinDate;
+
+    public String getAgentId() { return agentId; }
+    public void setAgentId(String agentId) { this.agentId = agentId; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public String getAvailabilityStatus() { return availabilityStatus; }
+    public void setAvailabilityStatus(String availabilityStatus) { this.availabilityStatus = availabilityStatus; }
+    public String getVerificationStatus() { return verificationStatus; }
+    public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; }
+    public String getShiftTiming() { return shiftTiming; }
+    public void setShiftTiming(String shiftTiming) { this.shiftTiming = shiftTiming; }
+    public double getSuccessRate() { return successRate; }
+    public void setSuccessRate(double successRate) { this.successRate = successRate; }
+    public Double getAverageRating() { return averageRating; }
+    public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+    public Long getTotalRatings() { return totalRatings; }
+    public void setTotalRatings(Long totalRatings) { this.totalRatings = totalRatings; }
+    public LocalDateTime getJoinDate() { return joinDate; }
+    public void setJoinDate(LocalDateTime joinDate) { this.joinDate = joinDate; }
 }

@@ -1,9 +1,14 @@
 package com.shipfast.operations.dto;
 
-import lombok.Data;
-
-@Data
 public class AgentRatingRequest {
     private Integer rating;
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
 }
 
