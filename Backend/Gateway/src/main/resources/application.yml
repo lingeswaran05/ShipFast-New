@@ -10,6 +10,7 @@ spring:
           '[/**]':
             allowedOrigins:
               - "https://shipfast-new.onrender.com"
+              - "https://ship-fast-jbiy.vercel.app"
             allowedMethods:
               - GET
               - POST
