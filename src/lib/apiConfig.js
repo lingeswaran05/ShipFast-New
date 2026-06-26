@@ -1,4 +1,4 @@
-import { API_ENDPOINTS, API_GATEWAY_URL } from '../config/api';
+import { API_ENDPOINTS, API_GATEWAY_URL, DEFAULT_GATEWAY_URL, isLocalFrontend } from '../config/api';
 
 const stripTrailingSlash = (value = '') => String(value || '').replace(/\/+$/, '');
 const toLower = (value = '') => String(value || '').trim().toLowerCase();
@@ -8,12 +8,21 @@ const isHttpLocal = (value = '') => {
 };
 const FALLBACK_ENABLED = String(import.meta.env.VITE_ENABLE_OLD_BACKEND_FALLBACK ?? 'false').toLowerCase() === 'true';
 
+const resolveEnvBaseUrl = (envValue) => {
+  const explicit = stripTrailingSlash(envValue || '');
+  if (!explicit) return '';
+  if (isLocalFrontend() && !isHttpLocal(explicit) && explicit === stripTrailingSlash(DEFAULT_GATEWAY_URL)) {
+    return '';
+  }
+  return explicit;
+};
+
 export const API_BASE_URL = stripTrailingSlash(
-  import.meta.env.VITE_API_BASE_URL || API_GATEWAY_URL || API_ENDPOINTS.AUTH
+  resolveEnvBaseUrl(import.meta.env.VITE_API_BASE_URL) || API_GATEWAY_URL || API_ENDPOINTS.AUTH
 );
 
 export const resolveServiceBaseUrl = (envValue, defaultBaseUrl = API_BASE_URL) => {
-  const explicit = stripTrailingSlash(envValue || '');
+  const explicit = resolveEnvBaseUrl(envValue);
   if (explicit) return explicit;
   return stripTrailingSlash(defaultBaseUrl || API_BASE_URL);
 };
@@ -28,6 +37,10 @@ export const resolveServiceBaseUrls = (envValue, options = {}) => {
   // Always keep the explicit local service first for stable development behavior.
   if (localDirect) {
     candidates.push(localDirect);
+  }
+
+  if (!primaryClean && !localDirect) {
+    candidates.push('');
   }
 
   // In default local multi-service mode we intentionally avoid jumping to a different base.

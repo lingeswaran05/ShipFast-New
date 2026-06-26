@@ -2,7 +2,7 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
-const GATEWAY_URL = "https://shipfast-gateway.onrender.com"
+const GATEWAY_URL = process.env.VITE_LOCAL_API_BASE_URL || "http://localhost:8088"
 
 export default defineConfig({
   plugins: [react()],

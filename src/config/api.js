@@ -1,7 +1,20 @@
 const stripTrailingSlash = (value = '') => String(value || '').replace(/\/+$/, '');
-const DEFAULT_GATEWAY_URL = 'https://shipfast-gateway.onrender.com';
+export const DEFAULT_GATEWAY_URL = 'https://shipfast-gateway.onrender.com';
+export const LOCAL_GATEWAY_URL = 'http://localhost:8088';
 
-export const API_GATEWAY_URL = stripTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_GATEWAY_URL);
+export const isLocalFrontend = () => {
+  if (typeof window === 'undefined') return false;
+  return ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname);
+};
+
+const resolveGatewayUrl = () => {
+  if (isLocalFrontend()) {
+    return stripTrailingSlash(import.meta.env.VITE_LOCAL_API_BASE_URL || '');
+  }
+  return stripTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_GATEWAY_URL);
+};
+
+export const API_GATEWAY_URL = resolveGatewayUrl();
 export const API_ENDPOINTS = {
   AUTH: API_GATEWAY_URL,
   ADMIN: API_GATEWAY_URL,

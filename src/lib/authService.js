@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { shouldRetryWithFallback } from './apiConfig';
+import { API_GATEWAY_URL } from '../config/api';
 
 const authClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
+  baseURL: API_GATEWAY_URL,
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'
@@ -184,7 +185,7 @@ api.interceptors.response.use(
 
     if (!refreshPromise) {
       refreshPromise = axios
-        .post(`${api.defaults.baseURL}/refresh-token`, { refreshToken })
+        .post(`${api.defaults.baseURL || ''}/api/v1/auth/refresh-token`, { refreshToken })
         .then((response) => {
           const payload = getResponsePayload(response);
           const tokens = extractTokens(payload);

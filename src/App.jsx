@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ShipmentProvider, useShipment } from './context/ShipmentContext';
 import { ContactPage } from './components/customer-page/ContactPage';
@@ -43,18 +44,6 @@ import {
   LifeBuoy,
   MessageSquare
 } from 'lucide-react';
-useEffect(() => {
-  const services = [
-    'https://shipfast-gateway.onrender.com/actuator/health',
-    'https://shipfast-auth.onrender.com/actuator/health',
-    'https://shipfast-shipment.onrender.com/actuator/health',
-    'https://shipfast-admin.onrender.com/actuator/health',
-    'https://shipfast-operations.onrender.com/actuator/health',
-    'https://shipfast-comms.onrender.com/actuator/health',
-    'https://shipfast-reporting.onrender.com/actuator/health',
-  ];
-  services.forEach(url => fetch(url).catch(() => {}));
-}, []);
 
 function ProtectedRoute({ children, allowedRole }) {
   const { currentUser, isLoading, activeRole } = useShipment();
@@ -202,6 +191,19 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    const services = [
+      'https://shipfast-gateway.onrender.com/actuator/health',
+      'https://shipfast-auth.onrender.com/actuator/health',
+      'https://shipfast-shipment.onrender.com/actuator/health',
+      'https://shipfast-admin.onrender.com/actuator/health',
+      'https://shipfast-operations.onrender.com/actuator/health',
+      'https://shipfast-comms.onrender.com/actuator/health',
+      'https://shipfast-reporting.onrender.com/actuator/health',
+    ];
+    services.forEach((url) => fetch(url).catch(() => {}));
+  }, []);
+
   return (
     <ShipmentProvider>
       <BrowserRouter>
