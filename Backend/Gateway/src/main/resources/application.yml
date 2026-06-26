@@ -12,6 +12,7 @@ spring:
               - "http://localhost:5173"
               - "http://127.0.0.1:5173"
               - "https://shipfast-new.onrender.com"
+              - "https://ship-fast-jbiy.vercel.app"
             allowedMethods:
               - GET
               - POST
