@@ -5,7 +5,7 @@ import { shipmentService } from './shipmentService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com',
+  baseURL: API_ENDPOINTS.OPERATIONS,
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json'

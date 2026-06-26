@@ -9,7 +9,11 @@ spring:
         corsConfigurations:
           '[/**]':
             allowedOrigins:
+              - "http://localhost:5173"
+              - "http://127.0.0.1:5173"
+              - "https://shipfast-hazel.vercel.app"
               - "https://shipfast-new.onrender.com"
+              - "https://ship-fast-jbiy.vercel.app"
             allowedMethods:
               - GET
               - POST
@@ -23,27 +27,27 @@ spring:
             maxAge: 3600
       routes:
         - id: auth-service
-          uri: ${AUTH_SERVICE_URL}
+          uri: ${AUTH_SERVICE_URL:https://shipfast-auth-joke.onrender.com}
           predicates:
             - Path=/api/v1/auth/**,/api/auth/**,/api/v1/roles/**,/api/roles/**
         - id: shipment-service
-          uri: ${SHIPMENT_SERVICE_URL}
+          uri: ${SHIPMENT_SERVICE_URL:https://shipfast-shipment-3e3f.onrender.com}
           predicates:
             - Path=/api/v1/shipments/**,/api/public/**
         - id: operations-service
-          uri: ${OPERATIONS_SERVICE_URL}
+          uri: ${OPERATIONS_SERVICE_URL:https://shipfast-operations-du7o.onrender.com}
           predicates:
             - Path=/api/operations/**
         - id: admin-service
-          uri: ${ADMIN_SERVICE_URL}
+          uri: ${ADMIN_SERVICE_URL:https://shipfast-admin-ix0r.onrender.com}
           predicates:
             - Path=/api/admin/**
         - id: communications-service
-          uri: ${COMMUNICATIONS_SERVICE_URL}
+          uri: ${COMMUNICATIONS_SERVICE_URL:https://shipfast-communications-rn9l.onrender.com}
           predicates:
             - Path=/api/notifications/**,/api/support/**
         - id: reporting-service
-          uri: ${REPORTING_SERVICE_URL}
+          uri: ${REPORTING_SERVICE_URL:https://shipfast-reporting-ed3u.onrender.com}
           predicates:
             - Path=/api/reports/**
 management:

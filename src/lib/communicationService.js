@@ -3,7 +3,7 @@ import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
 import { authStorage } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
-const COMM_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_API_BASE_URL || 'https://shipfast-gateway.onrender.com', {
+const COMM_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_COMM_BASE_URL, {
   defaultBaseUrl: API_ENDPOINTS.COMMUNICATIONS
 })
   .filter((value, index, list) => list.indexOf(value) === index);

@@ -1,5 +1,5 @@
 const stripTrailingSlash = (value = '') => String(value || '').replace(/\/+$/, '');
-export const DEFAULT_GATEWAY_URL = 'https://shipfast-gateway.onrender.com';
+export const DEFAULT_GATEWAY_URL = 'https://shipfast-gateway-7ake.onrender.com';
 export const LOCAL_GATEWAY_URL = 'http://localhost:8088';
 
 export const isLocalFrontend = () => {
