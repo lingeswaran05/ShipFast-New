@@ -292,6 +292,7 @@ public class AuthServiceImpl implements AuthService {
 
         otpRepository.deleteByEmail(request.getEmail());
         otpRepository.save(resetOtp);
+        otpRepository.flush();
 
         emailService.sendOtpEmail(request.getEmail(), otp);
     }

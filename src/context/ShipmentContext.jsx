@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { mockService } from '../mock/mockService';
 import { authService, authStorage } from '../lib/authService';
 import { adminService } from '../lib/adminService';
@@ -28,6 +28,8 @@ const DEFAULT_PRICING_CONFIG = {
   gstPct: 5,
   codHandlingFee: 50
 };
+const SHIPMENT_SYNC_INTERVAL_MS = 60000;
+const NOTIFICATION_SYNC_INTERVAL_MS = 120000;
 
 const parseStored = (key, fallback = []) => {
   try {
@@ -311,6 +313,10 @@ export function ShipmentProvider({ children }) {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const shipmentRefreshInFlightRef = useRef(null);
+  const lastShipmentRefreshStartedAtRef = useRef(0);
+  const notificationRefreshInFlightRef = useRef(null);
+  const lastNotificationRefreshStartedAtRef = useRef(0);
 
   const normalizeNotification = (notification = {}) => {
     const id = String(notification?.id ?? `${Date.now()}-${Math.random()}`).trim();
@@ -574,34 +580,54 @@ export function ShipmentProvider({ children }) {
     }
   };
 
-  const refreshShipments = async () => {
+  const refreshShipments = async (options = {}) => {
     if (!currentUser) return [];
-    let userShipments = [];
-    let didLoadSuccessfully = false;
-    try {
-      setIsRefreshing(true);
-      const role = normalizeRole(currentUser.role);
-      console.log('refreshShipments start', { currentUser, role });
-      if (role === 'admin' || role === 'agent') {
-        userShipments = await shipmentService.getAllShipments();
-      } else {
-        const ownerIdentifiers = getShipmentOwnerIdentifiers(currentUser);
-        console.log('refreshShipments ownerIdentifiers', ownerIdentifiers);
-        userShipments = ownerIdentifiers.length > 0 ? await shipmentService.getShipments(ownerIdentifiers) : [];
-      }
-      console.log('refreshShipments result', userShipments);
-      didLoadSuccessfully = true;
-    } catch (error) {
-      console.warn('Failed to load shipments from backend, preserving last known shipment state', error);
+    const { force = true } = options;
+    const now = Date.now();
+
+    if (shipmentRefreshInFlightRef.current) {
+      return shipmentRefreshInFlightRef.current;
+    }
+
+    if (!force && now - lastShipmentRefreshStartedAtRef.current < SHIPMENT_SYNC_INTERVAL_MS) {
       return shipments;
+    }
+
+    lastShipmentRefreshStartedAtRef.current = now;
+    shipmentRefreshInFlightRef.current = (async () => {
+      let userShipments = [];
+      let didLoadSuccessfully = false;
+      try {
+        setIsRefreshing(true);
+        const role = normalizeRole(currentUser.role);
+        console.log('refreshShipments start', { currentUser, role });
+        if (role === 'admin' || role === 'agent') {
+          userShipments = await shipmentService.getAllShipments();
+        } else {
+          const ownerIdentifiers = getShipmentOwnerIdentifiers(currentUser);
+          console.log('refreshShipments ownerIdentifiers', ownerIdentifiers);
+          userShipments = ownerIdentifiers.length > 0 ? await shipmentService.getShipments(ownerIdentifiers) : [];
+        }
+        console.log('refreshShipments result', userShipments);
+        didLoadSuccessfully = true;
+      } catch (error) {
+        console.warn('Failed to load shipments from backend, preserving last known shipment state', error);
+        return shipments;
+      } finally {
+        setIsRefreshing(false);
+      }
+      if (didLoadSuccessfully) {
+        setShipments(userShipments || []);
+        setLastDataSyncAt(new Date().toISOString());
+      }
+      return userShipments;
+    })();
+
+    try {
+      return await shipmentRefreshInFlightRef.current;
     } finally {
-      setIsRefreshing(false);
+      shipmentRefreshInFlightRef.current = null;
     }
-    if (didLoadSuccessfully) {
-      setShipments(userShipments || []);
-      setLastDataSyncAt(new Date().toISOString());
-    }
-    return userShipments;
   };
 
   const refreshPricingConfig = async () => {
@@ -641,19 +667,47 @@ export function ShipmentProvider({ children }) {
     }
   };
 
-  const refreshUserNotifications = async (userId = null) => {
+  const refreshUserNotifications = async (userId = null, options = {}) => {
     const effectiveUserId = userId || currentUser?.userId || currentUser?.id;
     if (!effectiveUserId) return [];
-    try {
-      const latestNotifications = await communicationService.getUserNotifications(effectiveUserId);
-      const dismissed = new Set(dismissedNotificationIds.map((value) => String(value).trim()));
-      const filteredLatest = (latestNotifications || []).filter((item) => !dismissed.has(String(item?.id || '').trim()));
-      setNotifications((prev) => mergeNotifications(filteredLatest, prev));
+    const { force = true } = options;
+    const now = Date.now();
 
-      return filteredLatest;
-    } catch (error) {
-      console.error('Failed to fetch notifications from backend', error);
+    if (notificationRefreshInFlightRef.current) {
+      return notificationRefreshInFlightRef.current;
+    }
+
+    if (!force && now - lastNotificationRefreshStartedAtRef.current < NOTIFICATION_SYNC_INTERVAL_MS) {
       return notifications;
+    }
+
+    lastNotificationRefreshStartedAtRef.current = now;
+    notificationRefreshInFlightRef.current = (async () => {
+      try {
+        const userNotificationLists = await Promise.allSettled([
+          communicationService.getUserNotifications(effectiveUserId),
+          ...(String(currentUser?.role || '').toLowerCase() === 'admin'
+            ? [communicationService.getUserNotifications('ADMIN')]
+            : [])
+        ]);
+        const latestNotifications = userNotificationLists.flatMap((result) => (
+          result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : []
+        ));
+        const dismissed = new Set(dismissedNotificationIds.map((value) => String(value).trim()));
+        const filteredLatest = (latestNotifications || []).filter((item) => !dismissed.has(String(item?.id || '').trim()));
+        setNotifications((prev) => mergeNotifications(filteredLatest, prev));
+
+        return filteredLatest;
+      } catch (error) {
+        console.error('Failed to fetch notifications from backend', error);
+        return notifications;
+      }
+    })();
+
+    try {
+      return await notificationRefreshInFlightRef.current;
+    } finally {
+      notificationRefreshInFlightRef.current = null;
     }
   };
 
@@ -688,6 +742,7 @@ export function ShipmentProvider({ children }) {
               } catch {
                   userShipments = [];
               }
+                lastShipmentRefreshStartedAtRef.current = Date.now();
                 setShipments(userShipments);
                 if (user.role === 'admin') {
                   await loadUsersFromDb();
@@ -768,6 +823,7 @@ export function ShipmentProvider({ children }) {
       } catch {
         userShipments = [];
       }
+      lastShipmentRefreshStartedAtRef.current = Date.now();
       setShipments(userShipments);
       await refreshPricingConfig();
       setLastDataSyncAt(new Date().toISOString());
@@ -2087,12 +2143,13 @@ export function ShipmentProvider({ children }) {
   const addNotification = (message, role = 'all', status = 'INFO') => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const createdAt = new Date().toISOString();
+      const roleName = String(role || 'all').toLowerCase();
       setNotifications(prev => {
         const next = mergeNotifications([
           {
             id,
             message,
-            role: String(role || 'all').toLowerCase(),
+            role: roleName,
             status,
             createdAt,
             timestamp: new Date(createdAt).toLocaleString()
@@ -2100,6 +2157,14 @@ export function ShipmentProvider({ children }) {
         ], prev);
         return next.slice(0, 100);
       });
+      const targetUserId = roleName === 'admin'
+        ? 'ADMIN'
+        : (currentUser?.userId || currentUser?.id || currentUser?.email);
+      if (targetUserId) {
+        communicationService.sendNotification(targetUserId, status || 'INFO', message).catch(() => {
+          // best-effort persistence only; in-memory notification is already shown
+        });
+      }
   };
 
   const getRoleNotifications = (role) => {
@@ -2256,24 +2321,27 @@ export function ShipmentProvider({ children }) {
   useEffect(() => {
     if (!currentUser) return;
 
-    refreshUserNotifications(currentUser.userId || currentUser.id);
+    refreshUserNotifications(currentUser.userId || currentUser.id, { force: false });
     const interval = setInterval(() => {
-      refreshUserNotifications(currentUser.userId || currentUser.id);
-    }, 20000);
+      if (document.visibilityState === 'visible') {
+        refreshUserNotifications(currentUser.userId || currentUser.id, { force: false });
+      }
+    }, NOTIFICATION_SYNC_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [currentUser?.userId, currentUser?.id, dismissedNotificationIds]);
+  }, [currentUser?.userId, currentUser?.id]);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    refreshShipments();
     const interval = setInterval(() => {
-      refreshShipments();
-    }, 10000);
+      if (document.visibilityState === 'visible') {
+        refreshShipments({ force: false });
+      }
+    }, SHIPMENT_SYNC_INTERVAL_MS);
 
     const onFocus = () => {
-      refreshShipments();
+      refreshShipments({ force: false });
     };
     window.addEventListener('focus', onFocus);
 

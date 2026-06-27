@@ -97,7 +97,12 @@ const getErrorMessage = (error, fallback) => (
   error?.message ||
   fallback
 );
-const isUnavailable = (error) => Number(error?.response?.status || 0) === 404 || error?.message === 'Network Error';
+const getStatusCode = (error) => Number(error?.response?.status || 0);
+const isUnavailable = (error) => getStatusCode(error) === 404 || error?.message === 'Network Error';
+const shouldUseLocalNotifications = (error) => {
+  const status = getStatusCode(error);
+  return isUnavailable(error) || status === 401 || status === 403;
+};
 
 const normalizeStatus = (status) => String(status || 'OPEN').replace(/_/g, ' ').toUpperCase();
 
@@ -202,7 +207,7 @@ export const communicationService = {
       saveLocalNotification(mapped);
       return mapped;
     } catch (error) {
-      if (isUnavailable(error)) endpointAvailability.notifications = false;
+      if (shouldUseLocalNotifications(error)) endpointAvailability.notifications = false;
       const fallbackNotification = mapNotification({
         id: `local-${Date.now()}`,
         userId,
@@ -230,7 +235,7 @@ export const communicationService = {
       const local = readLocalNotifications().filter((item) => !item.userId || item.userId === userId);
       return [...mapped, ...local].slice(0, 200);
     } catch (error) {
-      if (isUnavailable(error)) endpointAvailability.notifications = false;
+      if (shouldUseLocalNotifications(error)) endpointAvailability.notifications = false;
       const local = readLocalNotifications().filter((item) => !item.userId || item.userId === userId);
       return local.map(mapNotification);
     }

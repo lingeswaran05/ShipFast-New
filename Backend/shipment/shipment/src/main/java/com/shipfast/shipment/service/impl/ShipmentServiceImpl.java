@@ -146,7 +146,13 @@ public class ShipmentServiceImpl implements ShipmentService {
                 .build();
 
         populateSenderEmailFromCustomerIfMissing(shipment);
-        return shipmentRepository.save(shipment);
+        Shipment saved = shipmentRepository.save(shipment);
+        try {
+            sendBookingEmail(saved);
+        } catch (RuntimeException ignored) {
+            // Booking is already saved; email failures should not break shipment creation.
+        }
+        return saved;
     }
 
     @Override
@@ -378,7 +384,13 @@ public class ShipmentServiceImpl implements ShipmentService {
             shipment.setRunSheetId(request.getRunSheetId().trim());
         }
         shipment.setUpdatedAt(LocalDateTime.now());
-        return shipmentRepository.save(shipment);
+        Shipment saved = shipmentRepository.save(shipment);
+        try {
+            sendAssignmentEmail(saved);
+        } catch (RuntimeException ignored) {
+            // Assignment is already saved; email failures should not break dispatch.
+        }
+        return saved;
     }
 
     @Override
@@ -486,8 +498,8 @@ public class ShipmentServiceImpl implements ShipmentService {
     }
 
     private void sendDeliveryEmail(Shipment shipment) {
-        String senderEmail = resolveSenderEmail(shipment);
-        if (!hasText(senderEmail)) return;
+        List<String> recipients = getShipmentPartyEmails(shipment);
+        if (recipients.isEmpty()) return;
 
         String tracking = text(shipment.getTrackingNumber(), shipment.getId());
         String agentName = resolveAgentName(shipment);
@@ -512,35 +524,130 @@ public class ShipmentServiceImpl implements ShipmentService {
         );
 
         byte[] invoice = invoiceService.generateInvoice(shipment);
-        emailService.sendEmail(
-                senderEmail,
-                "Shipment Status: Delivered - " + tracking,
-                body,
-                invoice,
-                "Invoice-" + tracking + ".png",
-                "image/png"
-        );
+        for (String recipient : recipients) {
+            try {
+                emailService.sendEmail(
+                        recipient,
+                        "Shipment Status: Delivered - " + tracking,
+                        body,
+                        invoice,
+                        "Invoice-" + tracking + ".png",
+                        "image/png"
+                );
+            } catch (RuntimeException ex) {
+                System.err.println("Failed to send delivery email to " + recipient + ": " + ex.getMessage());
+            }
+        }
 
         byte[] pod = decodeDataUrl(shipment.getProofOfDeliveryImage());
         if (pod != null && pod.length > 0) {
-            emailService.sendEmail(
-                    senderEmail,
-                    "Proof of Delivery - " + tracking,
-                    "Proof of delivery for shipment " + tracking + " is attached.",
-                    pod,
-                    "Proof-of-Delivery-" + tracking + podExtension(shipment.getProofOfDeliveryImage()),
-                    podContentType(shipment.getProofOfDeliveryImage())
-            );
+            for (String recipient : recipients) {
+                try {
+                    emailService.sendEmail(
+                            recipient,
+                            "Proof of Delivery - " + tracking,
+                            "Proof of delivery for shipment " + tracking + " is attached.",
+                            pod,
+                            "Proof-of-Delivery-" + tracking + podExtension(shipment.getProofOfDeliveryImage()),
+                            podContentType(shipment.getProofOfDeliveryImage())
+                    );
+                } catch (RuntimeException ex) {
+                    System.err.println("Failed to send proof of delivery email to " + recipient + ": " + ex.getMessage());
+                }
+            }
         }
     }
+
+    private void sendBookingEmail(Shipment shipment) {
+        String tracking = text(shipment.getTrackingNumber(), shipment.getId());
+        String body = String.join("\n",
+                "Hello " + text(shipment.getSender() != null ? shipment.getSender().getName() : null, "Customer") + ",",
+                "",
+                "Your shipment has been booked successfully.",
+                "",
+                "Booking details:",
+                "Status: Booked",
+                "Tracking ID: " + tracking,
+                "Receiver: " + text(shipment.getRecipient() != null ? shipment.getRecipient().getName() : null, "-"),
+                "Service Type: " + text(shipment.getServiceType(), "-"),
+                "Estimated delivery: " + (shipment.getEstimatedDelivery() != null ? shipment.getEstimatedDelivery() : "-"),
+                "Amount: " + (shipment.getCost() != null ? shipment.getCost() : 0),
+                "",
+                "You can track your shipment anytime from the My Shipments page in your ShipFast dashboard.",
+                "",
+                "Regards,",
+                "ShipFast Courier"
+        );
+        sendEmailToShipmentParties(shipment, "Shipment Booked - " + tracking, body);
+    }
+
+    private void sendAssignmentEmail(Shipment shipment) {
+        String tracking = text(shipment.getTrackingNumber(), shipment.getId());
+        Map<String, Object> agent = resolveAgentDetails(shipment);
+        String agentName = firstNonBlank(
+                asText(agent.get("name")),
+                asText(agent.get("fullName")),
+                asText(agent.get("userId")),
+                asText(agent.get("agentId")),
+                shipment.getAssignedAgentId(),
+                "Assigned Agent"
+        );
+        String agentContact = firstNonBlank(
+                asText(agent.get("phoneNumber")),
+                asText(agent.get("phone")),
+                asText(agent.get("mobile")),
+                asText(agent.get("contactNumber")),
+                "-"
+        );
+        String body = String.join("\n",
+                "Hello " + text(shipment.getSender() != null ? shipment.getSender().getName() : null, "Customer") + ",",
+                "",
+                "An agent has been assigned to your shipment " + tracking + ".",
+                "",
+                "Agent details:",
+                "Name: " + agentName,
+                "Contact: " + agentContact,
+                "Agent ID: " + text(shipment.getAssignedAgentId(), "-"),
+                "",
+                "Current status: " + text(shipment.getStatus(), "-"),
+                "Tracking ID: " + tracking,
+                "",
+                "Regards,",
+                "ShipFast Courier"
+        );
+        sendEmailToShipmentParties(shipment, "Agent Assigned - " + tracking, body);
+    }
+
+    private void sendEmailToShipmentParties(Shipment shipment, String subject, String body) {
+        for (String recipient : getShipmentPartyEmails(shipment)) {
+            try {
+                emailService.sendEmail(recipient, subject, body);
+            } catch (RuntimeException ex) {
+                System.err.println("Failed to send shipment email to " + recipient + ": " + ex.getMessage());
+            }
+        }
+    }
+
+    private List<String> getShipmentPartyEmails(Shipment shipment) {
+        List<String> recipients = new ArrayList<>();
+        String senderEmail = resolveSenderEmail(shipment);
+        String recipientEmail = shipment != null && shipment.getRecipient() != null
+                ? shipment.getRecipient().getEmail()
+                : null;
+        if (hasText(senderEmail)) recipients.add(senderEmail.trim());
+        if (hasText(recipientEmail) && recipients.stream().noneMatch(email -> email.equalsIgnoreCase(recipientEmail.trim()))) {
+            recipients.add(recipientEmail.trim());
+        }
+        return recipients;
+    }
+
     private void sendStatusUpdateEmail(Shipment shipment, String newStatus) {
         // Skip sending emails for already delivered status (handled separately)
         if ("Delivered".equalsIgnoreCase(newStatus)) {
             return;
         }
         
-        String senderEmail = resolveSenderEmail(shipment);
-        if (!hasText(senderEmail)) return;
+        if (getShipmentPartyEmails(shipment).isEmpty()) return;
 
         String tracking = text(shipment.getTrackingNumber(), shipment.getId());
         String statusText = normalizeStatus(newStatus);
@@ -549,13 +656,10 @@ public class ShipmentServiceImpl implements ShipmentService {
         String body = buildStatusUpdateEmailBody(shipment, formattedStatus, tracking);
         
         try {
-            emailService.sendEmail(
-                    senderEmail,
+            sendEmailToShipmentParties(
+                    shipment,
                     "Shipment Status Update: " + formattedStatus + " - " + tracking,
-                    body,
-                    null,
-                    null,
-                    null
+                    body
             );
         } catch (RuntimeException ex) {
             // Log but don't fail - status update is already saved
@@ -600,25 +704,34 @@ public class ShipmentServiceImpl implements ShipmentService {
     private String resolveAgentName(Shipment shipment) {
         String agentIdentifier = firstNonBlank(shipment.getDeliveredByAgentId(), shipment.getAssignedAgentId());
         if (!hasText(agentIdentifier)) return "Assigned Agent";
+        Map<String, Object> agent = resolveAgentDetails(shipment);
+        if (!agent.isEmpty()) {
+            return firstNonBlank(
+                    asText(agent.get("name")),
+                    asText(agent.get("fullName")),
+                    asText(agent.get("userId")),
+                    asText(agent.get("agentId")),
+                    agentIdentifier
+            );
+        }
+        return agentIdentifier;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> resolveAgentDetails(Shipment shipment) {
+        String agentIdentifier = shipment == null ? null : firstNonBlank(shipment.getDeliveredByAgentId(), shipment.getAssignedAgentId());
+        if (!hasText(agentIdentifier)) return Map.of();
         try {
             Map<String, Object> agent = restTemplate.getForObject(
                     operationsApiBaseUrl() + "/agents/"
                             + UriUtils.encodePathSegment(agentIdentifier, java.nio.charset.StandardCharsets.UTF_8),
                     Map.class
             );
-            if (agent != null) {
-                return firstNonBlank(
-                        asText(agent.get("name")),
-                        asText(agent.get("fullName")),
-                        asText(agent.get("userId")),
-                        asText(agent.get("agentId")),
-                        agentIdentifier
-                );
-            }
+            return agent != null ? agent : Map.of();
         } catch (RestClientException ignored) {
             // Keep delivery mail available even if operations service cannot be reached.
         }
-        return agentIdentifier;
+        return Map.of();
     }
 
     private String resolveSenderEmail(Shipment shipment) {

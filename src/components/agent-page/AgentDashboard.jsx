@@ -293,6 +293,11 @@ export function AgentDashboard({ view }) {
       () => supportTickets.find((ticket) => ticket.id === selectedSupportTicketId) || null,
       [supportTickets, selectedSupportTicketId]
     );
+    const selectedSupportTicketIdRef = useRef(selectedSupportTicketId);
+
+    useEffect(() => {
+      selectedSupportTicketIdRef.current = selectedSupportTicketId;
+    }, [selectedSupportTicketId]);
 
     const computeAgentPerformance = useCallback((source = agentShipments) => {
       const deliveredCount = source.filter((s) => normalizeStatus(s.status) === 'DELIVERED').length;
@@ -1011,9 +1016,10 @@ export function AgentDashboard({ view }) {
           const data = await getSupportTickets(currentUser?.userId || currentUser?.id || currentUser?.email);
           if (!mounted) return;
           setSupportTickets(data || []);
+          const selectedId = selectedSupportTicketIdRef.current;
           if (!data || data.length === 0) {
             setSelectedSupportTicketId(null);
-          } else if (!selectedSupportTicketId || !data.some((ticket) => ticket.id === selectedSupportTicketId)) {
+          } else if (!selectedId || !data.some((ticket) => ticket.id === selectedId)) {
             setSelectedSupportTicketId(data[0].id);
           }
         } catch {
@@ -1026,13 +1032,13 @@ export function AgentDashboard({ view }) {
       loadTickets();
       const interval = setInterval(() => {
         loadTickets({ silent: true });
-      }, 10000);
+      }, 60000);
 
       return () => {
         mounted = false;
         clearInterval(interval);
       };
-    }, [view, currentUser?.userId, currentUser?.id, currentUser?.email, getSupportTickets, selectedSupportTicketId]);
+    }, [view, currentUser?.userId, currentUser?.id, currentUser?.email]);
 
     const handleSendAdminMessage = async () => {
         const text = String(adminMessage || '').trim();

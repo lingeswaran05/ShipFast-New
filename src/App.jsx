@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ShipmentProvider, useShipment } from './context/ShipmentContext';
 import { ContactPage } from './components/customer-page/ContactPage';
@@ -191,19 +190,6 @@ function AppRoutes() {
 }
 
 function App() {
-  useEffect(() => {
-    const services = [
-      'https://shipfast-gateway-7ake.onrender.com/actuator/health',
-      'https://shipfast-auth-joke.onrender.com/actuator/health',
-      'https://shipfast-shipment-3e3f.onrender.com/actuator/health',
-      'https://shipfast-admin-ix0r.onrender.com/actuator/health',
-      'https://shipfast-operations-du7o.onrender.com/actuator/health',
-      'https://shipfast-communications-rn9l.onrender.com/actuator/health',
-      'https://shipfast-reporting-ed3u.onrender.com/actuator/health',
-    ];
-    services.forEach((url) => fetch(url).catch(() => {}));
-  }, []);
-
   return (
     <ShipmentProvider>
       <BrowserRouter>

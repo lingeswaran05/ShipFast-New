@@ -411,7 +411,12 @@ export function AdminDashboard({ view }) {
           const identity = normalize(userId || email || requestId);
           if (!identity) return null;
 
-          const profile = await operationsService.getAgentProfile(identity);
+          let profile = null;
+          try {
+            profile = await operationsService.getAgentProfile(identity);
+          } catch {
+            profile = null;
+          }
           const localDocs = getLocalAgentDocs({ userId: identity, email });
 
           return {
@@ -454,10 +459,8 @@ export function AdminDashboard({ view }) {
         .filter((result) => result.status === 'fulfilled' && result.value)
         .map((result) => result.value);
 
-      if (next.length > 0) {
-        setBackendPendingRequests(next);
-        return;
-      }
+      setBackendPendingRequests(next);
+      if (next.length > 0) return;
 
       /* Fallback path: derive pending requests from operations profile data
       // when role request endpoint is unavailable (e.g., 404) or returns empty.
