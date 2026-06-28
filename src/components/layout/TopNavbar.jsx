@@ -1,11 +1,11 @@
-import { Bell, X } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useShipment } from '../../context/ShipmentContext';
 import { useNavigate } from 'react-router-dom';
 
 import logoImage from '../../assets/logo.png';
 
-export function TopNavbar({ user, isSidebarOpen }) {
+export function TopNavbar({ user, isSidebarOpen, setIsSidebarOpen }) {
   const { getRoleNotifications, dismissNotification, activeRole, switchActiveRole } = useShipment();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
@@ -58,25 +58,35 @@ export function TopNavbar({ user, isSidebarOpen }) {
   };
 
   return (
-    <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 px-8 flex items-center justify-between">
+    <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 px-4 sm:px-6 md:px-8 flex items-center justify-between">
       {/* Left side - Logo (Only visible when sidebar is closed) */}
-      <div 
-        onClick={() => navigate('/')} 
-        className={`flex items-center gap-3 cursor-pointer group ${isSidebarOpen ? 'hidden' : 'flex'}`}
-      >
-        <img src={logoImage} alt="ShipFast" className="h-8 w-auto transition-transform group-hover:scale-110 duration-300" />
-        <span className="font-heading font-bold text-xl bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-pink-500 transition-all duration-300">
-          ShipFast
-        </span>
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          onClick={() => setIsSidebarOpen?.(true)}
+          className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+          aria-label="Open navigation"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div 
+          onClick={() => navigate('/')} 
+          className={`items-center gap-3 cursor-pointer group min-w-0 ${isSidebarOpen ? 'hidden md:hidden' : 'flex'}`}
+        >
+          <img src={logoImage} alt="ShipFast" className="h-8 w-auto transition-transform group-hover:scale-110 duration-300" />
+          <span className="font-heading font-bold text-lg sm:text-xl bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-pink-500 transition-all duration-300 truncate">
+            ShipFast
+          </span>
+        </div>
       </div>
 
       {/* Right side - Notifications & Profile */}
-       <div className="flex items-center gap-4 ml-auto">
+       <div className="flex items-center gap-2 sm:gap-4 ml-auto">
           {user?.role === 'agent' && (
             <button
               type="button"
               onClick={handleRoleToggle}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+              className="hidden sm:inline-flex px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Switch to {effectiveRole === 'agent' ? 'Customer' : 'Agent'}
             </button>
@@ -92,7 +102,7 @@ export function TopNavbar({ user, isSidebarOpen }) {
             </button>
             
             {showNotifications && (
-               <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up z-50">
+               <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up z-50">
                   <div className="p-3 bg-slate-50 border-b border-slate-100 font-bold text-slate-700">Notifications</div>
                   <div className="max-h-64 overflow-y-auto">
                      {visibleNotifications.length > 0 ? visibleNotifications.map((n) => (
@@ -129,11 +139,11 @@ export function TopNavbar({ user, isSidebarOpen }) {
             )}
           </div>
 
-          <div className="h-8 w-px bg-slate-200 mx-2"></div>
+          <div className="h-8 w-px bg-slate-200 mx-1 sm:mx-2"></div>
           
           <div 
             onClick={handleProfileClick}
-            className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 pr-3 rounded-full border border-transparent hover:border-slate-100 transition-all duration-300"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer hover:bg-slate-50 p-1 sm:p-1.5 sm:pr-3 rounded-full border border-transparent hover:border-slate-100 transition-all duration-300"
           >
              <div className="text-right hidden sm:block">
                <div className="text-sm font-bold text-slate-900 leading-tight group-hover:text-purple-600 transition-colors">{user?.name}</div>

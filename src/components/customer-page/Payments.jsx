@@ -217,7 +217,7 @@ export function Payments() {
             </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="mobile-card-table mobile-payments-table w-full text-left">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Transaction ID</th>

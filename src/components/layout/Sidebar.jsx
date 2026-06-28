@@ -19,7 +19,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, sidebarItems, onLogou
   return (
     <aside 
       className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transition-all duration-300 flex flex-col
-        ${isSidebarOpen ? 'w-64' : 'w-20'}
+        ${isSidebarOpen ? 'translate-x-0 w-72 md:w-64 shadow-2xl md:shadow-none' : '-translate-x-full md:translate-x-0 md:w-20'}
       `}
     >
       <div className="p-4 border-b border-slate-100 flex items-center justify-between h-16">

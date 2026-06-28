@@ -56,3 +56,324 @@
   }
 }
 
+@media (max-width: 767px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .dashboard-main {
+    width: 100%;
+  }
+
+  .dashboard-content {
+    width: 100%;
+    padding: 1rem !important;
+    max-width: none !important;
+  }
+
+  .dashboard-content > * {
+    min-width: 0;
+  }
+
+  .dashboard-content .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.25rem !important;
+  }
+
+  .dashboard-content .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem !important;
+  }
+
+  .dashboard-content h1,
+  .dashboard-content h2 {
+    line-height: 1.2;
+  }
+
+  .dashboard-content h1,
+  .dashboard-content .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .dashboard-content h2,
+  .dashboard-content .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .dashboard-content .text-xl {
+    font-size: 1.125rem !important;
+  }
+
+  .dashboard-content .text-lg {
+    font-size: 1rem !important;
+  }
+
+  .dashboard-content .text-4xl {
+    font-size: 1.75rem !important;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-content .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .dashboard-content .rounded-3xl,
+  .dashboard-content .rounded-2xl {
+    border-radius: 1rem !important;
+  }
+
+  .dashboard-content .p-8 {
+    padding: 1rem !important;
+  }
+
+  .dashboard-content .p-6 {
+    padding: 1rem !important;
+  }
+
+  .dashboard-content .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .dashboard-content .py-6 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .dashboard-content .gap-10,
+  .dashboard-content .gap-8,
+  .dashboard-content .gap-6 {
+    gap: 1rem !important;
+  }
+
+  .dashboard-content .grid-cols-2,
+  .dashboard-content .grid-cols-3,
+  .dashboard-content .grid-cols-4 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .dashboard-content .md\:grid-cols-2,
+  .dashboard-content .md\:grid-cols-3,
+  .dashboard-content .md\:grid-cols-4,
+  .dashboard-content .lg\:grid-cols-3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .dashboard-content .flex:not(.keep-mobile-row) {
+    min-width: 0;
+  }
+
+  .dashboard-content input,
+  .dashboard-content select,
+  .dashboard-content textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+
+  .dashboard-content button {
+    min-height: 40px;
+  }
+
+  .dashboard-content .flex.items-center.justify-between {
+    gap: 0.75rem;
+  }
+
+  .dashboard-content .flex.items-center.justify-between:not(.keep-mobile-row) {
+    align-items: stretch;
+  }
+
+  .dashboard-content .flex.gap-4,
+  .dashboard-content .flex.gap-3 {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-content .flex.gap-4 > .relative,
+  .dashboard-content .flex.gap-4 > button,
+  .dashboard-content .flex.gap-3 > button {
+    flex: 1 1 100%;
+  }
+
+  .dashboard-content .w-64,
+  .dashboard-content .md\:w-64 {
+    width: 100% !important;
+  }
+
+  .dashboard-content .max-w-md,
+  .dashboard-content .max-w-2xl,
+  .dashboard-content .max-w-3xl,
+  .dashboard-content .max-w-4xl {
+    max-width: 100% !important;
+  }
+
+  .dashboard-content .min-h-\[400px\] {
+    min-height: auto !important;
+  }
+
+  .dashboard-content .shadow-xl {
+    box-shadow: 0 12px 30px rgb(15 23 42 / 0.08) !important;
+  }
+
+  .dashboard-content .hover\:scale-\[1\.02\]:hover,
+  .dashboard-content .hover\:-translate-y-0\.5:hover {
+    transform: none !important;
+  }
+
+  .dashboard-content .fixed.inset-0 .bg-white {
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+  }
+
+  .dashboard-content [id="booking-label-print"] {
+    max-width: 100% !important;
+  }
+
+  .dashboard-content [id="booking-label-print"] svg,
+  .dashboard-content [id="booking-label-print"] canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .dashboard-content .overflow-x-auto {
+    overflow-x: visible !important;
+  }
+
+  .mobile-card-table,
+  .mobile-card-table thead,
+  .mobile-card-table tbody,
+  .mobile-card-table tr,
+  .mobile-card-table th,
+  .mobile-card-table td {
+    display: block;
+  }
+
+  .mobile-card-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .mobile-card-table thead {
+    display: none;
+  }
+
+  .mobile-card-table tbody {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgb(248 250 252);
+  }
+
+  .mobile-card-table tbody tr {
+    background: white;
+    border: 1px solid rgb(226 232 240);
+    border-radius: 1rem;
+    padding: 0.75rem;
+    box-shadow: 0 6px 18px rgb(15 23 42 / 0.05);
+  }
+
+  .mobile-card-table tbody tr:hover {
+    background: white !important;
+  }
+
+  .mobile-card-table tbody td {
+    padding: 0.55rem 0 !important;
+    border: 0 !important;
+  }
+
+  .mobile-card-table tbody td:not(:first-child) {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 38%) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .mobile-card-table tbody td::before {
+    color: rgb(100 116 139);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .mobile-card-table tbody td:first-child {
+    border-bottom: 1px solid rgb(241 245 249) !important;
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .mobile-card-table tbody td:first-child button,
+  .mobile-card-table tbody td:first-child span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-card-table tbody td:last-child {
+    display: block;
+    padding-top: 0.75rem !important;
+    border-top: 1px solid rgb(241 245 249) !important;
+  }
+
+  .mobile-card-table tbody td:last-child > div {
+    justify-content: flex-start !important;
+  }
+
+  .mobile-card-table tbody td[colspan] {
+    display: block !important;
+    text-align: center;
+  }
+
+  .mobile-card-table tbody td[colspan]::before {
+    content: none !important;
+  }
+
+  .mobile-shipments-table tbody td:nth-child(2)::before {
+    content: "Status";
+  }
+
+  .mobile-shipments-table tbody td:nth-child(3)::before {
+    content: "Route";
+  }
+
+  .mobile-shipments-table tbody td:nth-child(4)::before {
+    content: "Date";
+  }
+
+  .mobile-shipments-table tbody td:nth-child(5)::before {
+    content: "Details";
+  }
+
+  .mobile-shipments-table tbody td:nth-child(6)::before {
+    content: "Amount";
+  }
+
+  .mobile-payments-table tbody td:nth-child(2)::before {
+    content: "Date";
+  }
+
+  .mobile-payments-table tbody td:nth-child(3)::before {
+    content: "Description";
+  }
+
+  .mobile-payments-table tbody td:nth-child(4)::before {
+    content: "Method";
+  }
+
+  .mobile-payments-table tbody td:nth-child(5)::before {
+    content: "Status";
+  }
+
+  .mobile-payments-table tbody td:nth-child(6)::before {
+    content: "Amount";
+  }
+
+  .mobile-payments-table tbody td:nth-child(7)::before {
+    content: "Invoice";
+  }
+
+  .mobile-payments-table tbody td:nth-child(6),
+  .mobile-payments-table tbody td:nth-child(7) {
+    text-align: left !important;
+  }
+}
+

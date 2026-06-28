@@ -6,11 +6,13 @@ import { TopNavbar } from './TopNavbar';
 import { AnimatedPage } from './AnimatedPage';
 
 export function DashboardLayout({ user, onLogout, sidebarItems }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => (
+    typeof window === 'undefined' ? true : window.innerWidth >= 768
+  ));
   const { isRefreshing } = useShipment();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="dashboard-shell min-h-screen bg-slate-50 flex">
       <div className="print:hidden">
         <Sidebar 
           isSidebarOpen={isSidebarOpen} 
@@ -20,7 +22,16 @@ export function DashboardLayout({ user, onLogout, sidebarItems }) {
         />
       </div>
 
-      <main className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64 print:ml-0' : 'ml-20 print:ml-0'}`}>
+      {isSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-slate-900/35 md:hidden print:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <main className={`dashboard-main flex-1 min-w-0 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64 print:ml-0' : 'md:ml-20 print:ml-0'}`}>
         {isRefreshing && (
           <div className="fixed top-3 right-4 z-40">
             <div className="px-3 py-2 bg-white/90 backdrop-blur border border-slate-200 rounded-full shadow-sm text-xs text-slate-600 flex items-center gap-2 animate-pulse">
@@ -30,10 +41,10 @@ export function DashboardLayout({ user, onLogout, sidebarItems }) {
           </div>
         )}
         <div className="print:hidden">
-          <TopNavbar user={user} isSidebarOpen={isSidebarOpen} />
+          <TopNavbar user={user} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         </div>
 
-        <div className="p-8 max-w-7xl mx-auto print:p-0 print:max-w-none relative">
+        <div className="dashboard-content p-8 max-w-7xl mx-auto print:p-0 print:max-w-none relative">
           <AnimatedPage />
         </div>
       </main>
