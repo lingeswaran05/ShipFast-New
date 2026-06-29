@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Settings, Menu, X } from 'lucide-react';
+import { LogOut, Settings, Menu, X, Repeat2 } from 'lucide-react';
 import { useShipment } from '../../context/ShipmentContext';
 import logoImage from '../../assets/logo.png';
 
@@ -8,12 +8,20 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, sidebarItems, onLogou
   const location = useLocation();
 
 
-  const { currentUser } = useShipment();
+  const { currentUser, activeRole, switchActiveRole } = useShipment();
 
   const handleLogoClick = () => {
     if (currentUser?.role === 'admin') navigate('/admin');
     else if (currentUser?.role === 'agent') navigate('/agent');
     else navigate('/dashboard');
+  };
+
+  const handleRoleToggle = () => {
+    if (currentUser?.role !== 'agent') return;
+    const nextRole = (activeRole || currentUser?.role) === 'agent' ? 'customer' : 'agent';
+    switchActiveRole(nextRole);
+    navigate(nextRole === 'agent' ? '/agent' : '/dashboard');
+    setIsSidebarOpen(false);
   };
 
   return (
@@ -27,7 +35,7 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, sidebarItems, onLogou
           onClick={handleLogoClick}
           className={`flex items-center gap-3 overflow-hidden transition-all hover:opacity-80 ${!isSidebarOpen && 'hidden'}`}
         >
-          <img src={logoImage} alt="ShipFast" className="h-8 w-auto flex-shrink-0" />
+          <img src={logoImage} alt="ShipFast" className="h-10 w-auto flex-shrink-0" />
           <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent whitespace-nowrap">ShipFast</span>
         </button>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-slate-100 rounded-lg">
@@ -61,6 +69,18 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen, sidebarItems, onLogou
       </nav>
 
       <div className="p-4 border-t border-slate-100 space-y-1">
+        {currentUser?.role === 'agent' && (
+          <button
+            type="button"
+            onClick={handleRoleToggle}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-all whitespace-nowrap"
+          >
+            <Repeat2 className="w-5 h-5 min-w-[1.25rem]" />
+            <span className={`transition-all duration-300 ${isSidebarOpen ? 'opacity-100' : 'hidden'}`}>
+              Switch to {(activeRole || currentUser?.role) === 'agent' ? 'Customer' : 'Agent'}
+            </span>
+          </button>
+        )}
         <button 
            onClick={() => navigate(location.pathname.startsWith('/admin') ? '/admin/settings' : location.pathname.startsWith('/agent') ? '/agent/settings' : '/dashboard/settings')} 
            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all whitespace-nowrap"

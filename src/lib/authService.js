@@ -4,7 +4,7 @@ import { API_GATEWAY_URL } from '../config/api';
 
 const authClient = axios.create({
   baseURL: API_GATEWAY_URL,
-  timeout: 60000,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -76,7 +76,7 @@ const mapProfileToCurrentUser = (profile = {}) => {
     pincode: profile.pincode || '',
     role: normalizeRole(profile.role),
     status: String(profile.status || 'active').toLowerCase(),
-    profilePic: safeJsonParse(localStorage.getItem(CURRENT_USER_KEY))?.profilePic || null
+    profilePic: profile.profilePic || profile.profileImage || safeJsonParse(localStorage.getItem(CURRENT_USER_KEY))?.profilePic || null
   };
 };
 
@@ -150,7 +150,8 @@ const mapAnyUserToCurrentUser = (user = {}) => ({
   state: user.state || '',
   pincode: user.pincode || '',
   role: normalizeRole(user.role),
-  status: String(user.status || 'active').toLowerCase()
+  status: String(user.status || 'active').toLowerCase(),
+  profilePic: user.profilePic || user.profileImage || null
 });
 
 const isRefreshRoute = (url = '') => url.includes('/refresh-token');
@@ -293,13 +294,15 @@ export const authService = {
         address: profileData.address,
         city: profileData.city,
         state: profileData.state,
-        pincode: profileData.pincode
+        pincode: profileData.pincode,
+        profilePic: Object.prototype.hasOwnProperty.call(profileData, 'profilePic') ? profileData.profilePic : undefined,
+        profileImage: Object.prototype.hasOwnProperty.call(profileData, 'profilePic') ? profileData.profilePic : undefined
       }));
       const payload = getResponsePayload(response);
       const current = authStorage.getCurrentUser() || {};
       const updated = {
         ...mapProfileToCurrentUser({ ...current, ...payload }),
-        profilePic: current.profilePic || null
+        profilePic: payload.profilePic ?? payload.profileImage ?? current.profilePic ?? null
       };
       authStorage.setCurrentUser(updated);
       return updated;

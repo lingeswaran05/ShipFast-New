@@ -6,7 +6,7 @@ import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } fro
 
 const api = axios.create({
   baseURL: API_ENDPOINTS.OPERATIONS,
-  timeout: 60000,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json'
   }

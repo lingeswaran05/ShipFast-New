@@ -33,12 +33,12 @@ export function Homepage() {
       
       <div className="relative z-10">
         <header className="border-b border-white/20 bg-white/80 backdrop-blur-xl shadow-sm transition-colors duration-500">
-          <div className="container mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between gap-3">
             <Logo />
-            <nav className="flex items-center gap-4">
-              <Button variant="ghost" onClick={handleTrackShipment} className="hover:bg-blue-50 text-slate-700 font-semibold transition-all duration-300 hover:scale-105">
-                <MapPin className="size-4 mr-2" />
-                Track Shipment
+            <nav className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+              <Button variant="ghost" onClick={handleTrackShipment} className="hover:bg-blue-50 text-slate-700 font-semibold transition-all duration-300 hover:scale-105 px-2 sm:px-4">
+                <MapPin className="size-4 sm:mr-2" />
+                <span className="hidden sm:inline">Track Shipment</span>
               </Button>
               {currentUser ? (
                 <div 
@@ -54,19 +54,20 @@ export function Homepage() {
                         {currentUser.name?.charAt(0).toUpperCase()}
                       </div>
                    )}
-                   <span className="font-semibold text-slate-800">{currentUser.name}</span>
+                   <span className="hidden sm:inline font-semibold text-slate-800">{currentUser.name}</span>
                 </div>
               ) : (
                 <Button onClick={handleSignIn} className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 shadow-lg shadow-purple-500/50 text-white font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                  Sign In
-                  <ArrowRight className="size-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <span className="hidden sm:inline">Sign In</span>
+                  <span className="sm:hidden">Login</span>
+                  <ArrowRight className="size-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
             </nav>
           </div>
         </header>
 
-        <section className="container mx-auto px-6 py-24">
+        <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24 overflow-hidden">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -79,7 +80,7 @@ export function Homepage() {
                   🚀 India's Fastest Growing Courier Service
                 </span>
               </div>
-              <h1 className="text-6xl lg:text-7xl font-black mb-6 leading-tight">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-6 leading-tight break-words">
                 <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
                   Ship Smarter,
                 </span>
@@ -91,7 +92,7 @@ export function Homepage() {
               <p className="text-xl text-slate-600 mb-8 leading-relaxed">
                 Experience next-level logistics with real-time tracking, instant quotes, and seamless delivery operations. Your parcels, our priority.
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
                 <Button size="lg" onClick={handleCreateAccount} className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 shadow-xl shadow-purple-500/50 text-white font-bold text-lg px-8 py-6">
                   Get Started Free
                   <Zap className="size-5 ml-2" />

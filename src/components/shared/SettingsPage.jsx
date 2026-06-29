@@ -220,6 +220,9 @@ export function SettingsPage() {
     setFormData({ ...formData, [name]: value });
   };
 
+  const limitAlphaNumeric = (value, max = 12) => String(value || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, max).toUpperCase();
+  const limitDigits = (value, max) => String(value || '').replace(/\D/g, '').slice(0, max);
+
   const convertFileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
@@ -372,6 +375,10 @@ export function SettingsPage() {
       }
       if (!/^\d{12}$/.test(String(requestDetails.aadharNumber || ''))) {
         toast.error('Aadhaar number must be exactly 12 digits');
+        return;
+      }
+      if (String(requestDetails.licenseNumber || '').length > 12 || String(requestDetails.vehicleNumber || '').length > 12 || String(requestDetails.rcBookNumber || '').length > 12) {
+        toast.error('License, vehicle and RC book numbers must be 12 characters or fewer');
         return;
       }
       if (!hasMandatoryDocs) {
@@ -648,8 +655,9 @@ export function SettingsPage() {
               <label className="text-sm font-medium text-slate-700">License Number</label>
               <input
                 value={agentProfile.licenseNumber}
-                onChange={(e) => setAgentProfile(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                onChange={(e) => setAgentProfile(prev => ({ ...prev, licenseNumber: limitAlphaNumeric(e.target.value, 12) }))}
                 disabled={!isEditing}
+                maxLength={12}
                 className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 text-slate-500'}`}
               />
             </div>
@@ -657,8 +665,9 @@ export function SettingsPage() {
               <label className="text-sm font-medium text-slate-700">Vehicle Number</label>
               <input
                 value={agentProfile.vehicleNumber}
-                onChange={(e) => setAgentProfile(prev => ({ ...prev, vehicleNumber: e.target.value }))}
+                onChange={(e) => setAgentProfile(prev => ({ ...prev, vehicleNumber: limitAlphaNumeric(e.target.value, 12) }))}
                 disabled={!isEditing}
+                maxLength={12}
                 className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 text-slate-500'}`}
               />
             </div>
@@ -666,8 +675,9 @@ export function SettingsPage() {
               <label className="text-sm font-medium text-slate-700">RC Book Number</label>
               <input
                 value={agentProfile.rcBookNumber}
-                onChange={(e) => setAgentProfile(prev => ({ ...prev, rcBookNumber: e.target.value }))}
+                onChange={(e) => setAgentProfile(prev => ({ ...prev, rcBookNumber: limitAlphaNumeric(e.target.value, 12) }))}
                 disabled={!isEditing}
+                maxLength={12}
                 className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 text-slate-500'}`}
               />
             </div>
@@ -820,7 +830,8 @@ export function SettingsPage() {
                               <label className="text-sm font-medium text-slate-700">License Number</label>
                               <input
                                  value={requestDetails.licenseNumber}
-                                 onChange={(e) => setRequestDetails((prev) => ({ ...prev, licenseNumber: e.target.value }))}
+                                 onChange={(e) => setRequestDetails((prev) => ({ ...prev, licenseNumber: limitAlphaNumeric(e.target.value, 12) }))}
+                                 maxLength={12}
                                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                  placeholder="Driving license number"
                               />
@@ -833,7 +844,7 @@ export function SettingsPage() {
                               <input
                                  value={requestDetails.aadharNumber}
                                 onChange={(e) => {
-                                  const digitsOnly = String(e.target.value || '').replace(/\D/g, '').slice(0, 12);
+                                  const digitsOnly = limitDigits(e.target.value, 12);
                                   setRequestDetails((prev) => ({ ...prev, aadharNumber: digitsOnly }));
                                 }}
                                 inputMode="numeric"
@@ -847,7 +858,8 @@ export function SettingsPage() {
                               <label className="text-sm font-medium text-slate-700">Vehicle Number</label>
                               <input
                                  value={requestDetails.vehicleNumber}
-                                 onChange={(e) => setRequestDetails((prev) => ({ ...prev, vehicleNumber: e.target.value }))}
+                                 onChange={(e) => setRequestDetails((prev) => ({ ...prev, vehicleNumber: limitAlphaNumeric(e.target.value, 12) }))}
+                                 maxLength={12}
                                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                  placeholder="Vehicle registration number"
                               />
@@ -859,7 +871,8 @@ export function SettingsPage() {
                               <label className="text-sm font-medium text-slate-700">RC Book Number</label>
                               <input
                                  value={requestDetails.rcBookNumber}
-                                 onChange={(e) => setRequestDetails((prev) => ({ ...prev, rcBookNumber: e.target.value }))}
+                                 onChange={(e) => setRequestDetails((prev) => ({ ...prev, rcBookNumber: limitAlphaNumeric(e.target.value, 12) }))}
+                                 maxLength={12}
                                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                  placeholder="RC book number"
                               />

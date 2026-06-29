@@ -32,4 +32,8 @@ public class UserProfile {
     private String city;
     private String state;
     private String pincode;
+
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "LONGTEXT")
+    private String profileImage;
 }

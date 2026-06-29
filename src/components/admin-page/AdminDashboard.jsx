@@ -131,6 +131,7 @@ export function AdminDashboard({ view }) {
 
   const [newBranch, setNewBranch] = useState({ name: '', type: 'Branch', state: '', manager: '', contact: '', staffCount: 0, location: '', description: '' });
   const [newVehicle, setNewVehicle] = useState({ number: '', type: 'Van', driver: '', driverName: '', seats: 2, rcBook: '', photo: null, status: 'Available' });
+  const limitAdminIdentifier = (value, max = 12) => String(value || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, max).toUpperCase();
   const [newStaff, setNewStaff] = useState({ name: '', role: 'Agent', branch: '', status: 'Active' });
   const [isEditing, setIsEditing] = useState(false);
     const [roleDrafts, setRoleDrafts] = useState({});
@@ -1475,7 +1476,7 @@ export function AdminDashboard({ view }) {
                              <input className="w-full p-3 border rounded-lg" type="number" placeholder="Seats" value={newVehicle.seats} onChange={e => setNewVehicle({...newVehicle, seats: e.target.value})} />
                         </div>
                         
-                        <input className="w-full p-3 border rounded-lg" placeholder="RC Book Details" value={newVehicle.rcBook} onChange={e => setNewVehicle({...newVehicle, rcBook: e.target.value})} />
+                        <input className="w-full p-3 border rounded-lg" placeholder="RC Book Details" value={newVehicle.rcBook} maxLength={12} onChange={e => setNewVehicle({...newVehicle, rcBook: limitAdminIdentifier(e.target.value)})} />
 
                         <div className="text-xs text-slate-500">
                           Vehicle status can be changed directly from the fleet table.
@@ -1506,7 +1507,7 @@ export function AdminDashboard({ view }) {
                                 </h4>
                                 <input className="w-full p-3 border rounded-lg" placeholder="Name" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} required />
                                 <input className="w-full p-3 border rounded-lg" type="email" placeholder="Email" value={newStaff.email || ''} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
-                                <input className="w-full p-3 border rounded-lg" placeholder="Phone" value={newStaff.phone || ''} onChange={e => setNewStaff({...newStaff, phone: e.target.value})} />
+                                <input className="w-full p-3 border rounded-lg" placeholder="Phone" value={newStaff.phone || ''} inputMode="numeric" pattern="\d{10}" maxLength={10} onChange={e => setNewStaff({...newStaff, phone: String(e.target.value || '').replace(/\D/g, '').slice(0, 10)})} />
                                 <div className="grid grid-cols-2 gap-4">
                                     <input className="w-full p-3 border rounded-lg" type="date" placeholder="DOB" value={newStaff.personalDetails?.dob || ''} onChange={e => setNewStaff({...newStaff, personalDetails: {...newStaff.personalDetails, dob: e.target.value}})} />
                                     <input className="w-full p-3 border rounded-lg" placeholder="Blood Group" value={newStaff.personalDetails?.bloodGroup || ''} onChange={e => setNewStaff({...newStaff, personalDetails: {...newStaff.personalDetails, bloodGroup: e.target.value}})} />

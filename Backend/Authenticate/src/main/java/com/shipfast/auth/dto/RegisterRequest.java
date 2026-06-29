@@ -15,6 +15,8 @@ public class RegisterRequest {
     private String city;
     private String state;
     private String pincode;
+    private String profilePic;
+    private String profileImage;
 
     private UserRole role;   // CUSTOMER default if null
 }

@@ -2100,11 +2100,19 @@ export function ShipmentProvider({ children }) {
         .some((key) => Object.prototype.hasOwnProperty.call(updatedData, key));
 
       if (onlyPictureUpdate) {
-        const userWithPicture = { ...currentUser, profilePic: updatedData.profilePic ?? null };
-        setCurrentUser(userWithPicture);
-        authStorage.setCurrentUser(userWithPicture);
-          syncUserDirectory(userWithPicture);
-        return userWithPicture;
+        const updatedUser = await authService.updateProfile({
+          fullName: currentUser.fullName || currentUser.name,
+          phoneNumber: currentUser.phoneNumber || currentUser.phone,
+          address: currentUser.address,
+          city: currentUser.city,
+          state: currentUser.state,
+          pincode: currentUser.pincode,
+          profilePic: updatedData.profilePic ?? null
+        });
+        setCurrentUser(updatedUser);
+        authStorage.setCurrentUser(updatedUser);
+        syncUserDirectory(updatedUser);
+        return updatedUser;
       }
 
       // Keep agent onboarding/documents usable even if backend profile API does not support those fields.
@@ -2128,13 +2136,16 @@ export function ShipmentProvider({ children }) {
         address: updatedData.address ?? currentUser.address,
         city: updatedData.city ?? currentUser.city,
         state: updatedData.state ?? currentUser.state,
-        pincode: updatedData.pincode ?? currentUser.pincode
+        pincode: updatedData.pincode ?? currentUser.pincode,
+        profilePic: Object.prototype.hasOwnProperty.call(updatedData, 'profilePic')
+          ? updatedData.profilePic
+          : currentUser.profilePic
       };
 
       const updatedUser = await authService.updateProfile(profilePayload);
       const mergedUser = {
         ...updatedUser,
-        profilePic: currentUser.profilePic || null,
+        profilePic: updatedUser.profilePic ?? currentUser.profilePic ?? null,
         ...(hasExtendedData ? { documents: updatedData.documents, agentDetails: updatedData.agentDetails } : {})
       };
       setCurrentUser(mergedUser);

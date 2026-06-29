@@ -73,7 +73,7 @@ export function TopNavbar({ user, isSidebarOpen, setIsSidebarOpen }) {
           onClick={() => navigate('/')} 
           className={`items-center gap-3 cursor-pointer group min-w-0 ${isSidebarOpen ? 'hidden md:hidden' : 'flex'}`}
         >
-          <img src={logoImage} alt="ShipFast" className="h-8 w-auto transition-transform group-hover:scale-110 duration-300" />
+          <img src={logoImage} alt="ShipFast" className="h-10 w-auto transition-transform group-hover:scale-110 duration-300" />
           <span className="font-heading font-bold text-lg sm:text-xl bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-pink-500 transition-all duration-300 truncate">
             ShipFast
           </span>

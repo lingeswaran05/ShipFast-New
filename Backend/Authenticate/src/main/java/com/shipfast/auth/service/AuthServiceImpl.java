@@ -122,6 +122,7 @@ public class AuthServiceImpl implements AuthService {
         profile.setCity(request.getCity());
         profile.setState(request.getState());
         profile.setPincode(request.getPincode());
+        profile.setProfileImage(firstNonNull(request.getProfileImage(), request.getProfilePic()));
 
         userProfileRepository.save(profile);
 
@@ -236,6 +237,9 @@ public class AuthServiceImpl implements AuthService {
         profile.setCity(request.getCity());
         profile.setState(request.getState());
         profile.setPincode(request.getPincode());
+        if (request.getProfileImage() != null || request.getProfilePic() != null) {
+            profile.setProfileImage(firstNonNull(request.getProfileImage(), request.getProfilePic()));
+        }
 
         userProfileRepository.save(profile);
 
@@ -377,8 +381,13 @@ public class AuthServiceImpl implements AuthService {
                 profile.getState(),
                 profile.getPincode(),
                 user.getRole().name(),
-                user.isActive() ? "active" : "inactive"
+                user.isActive() ? "active" : "inactive",
+                profile.getProfileImage()
         );
+    }
+
+    private String firstNonNull(String primary, String fallback) {
+        return primary != null ? primary : fallback;
     }
 
     // ================= ADMIN MANAGEMENT =================

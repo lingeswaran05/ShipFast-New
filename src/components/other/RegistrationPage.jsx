@@ -77,6 +77,12 @@ export function RegistrationPage() {
       return;
     }
 
+    if (!/^\d{10}$/.test(String(formData.phone || ''))) {
+      setError('Phone number must be exactly 10 digits');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Register user via context
       await register({
@@ -103,9 +109,10 @@ export function RegistrationPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const nextValue = name === 'phone' ? String(value || '').replace(/\D/g, '').slice(0, 10) : value;
     const nextFormData = {
       ...formData,
-      [name]: value
+      [name]: nextValue
     };
     setFormData({
       ...nextFormData
@@ -277,7 +284,10 @@ export function RegistrationPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="+91 98765 43210"
+                  inputMode="numeric"
+                  pattern="\d{10}"
+                  maxLength={10}
+                  placeholder="9876543210"
                   className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-slate-50 hover:bg-white text-slate-900 placeholder-slate-400"
                   required
                 />

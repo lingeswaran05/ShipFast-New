@@ -31,6 +31,7 @@ const TERMINAL_SCAN_STATUSES = new Set(['DELIVERED', 'CANCELLED']);
 const SCAN_BARCODE_FORMATS = ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'qr_code'];
 const AGENT_SCAN_TARGET_KEY = 'sf_agent_scan_target';
 const toIdentityValue = (value) => String(value || '').trim().toLowerCase();
+const limitAgentIdentifier = (value, max = 12) => String(value || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, max).toUpperCase();
 
 const toCanonicalStatus = (value) => {
     const normalized = normalizeStatus(value).replace(/\s+/g, ' ').trim();
@@ -1100,7 +1101,8 @@ export function AgentDashboard({ view }) {
                             <input
                                 type="text"
                                 value={agentOnboarding.licenseNumber}
-                                onChange={(e) => setAgentOnboarding(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                                onChange={(e) => setAgentOnboarding(prev => ({ ...prev, licenseNumber: limitAgentIdentifier(e.target.value) }))}
+                                maxLength={12}
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 required
                             />
@@ -1110,7 +1112,8 @@ export function AgentDashboard({ view }) {
                             <input
                                 type="text"
                                 value={agentOnboarding.vehicleNumber}
-                                onChange={(e) => setAgentOnboarding(prev => ({ ...prev, vehicleNumber: e.target.value }))}
+                                onChange={(e) => setAgentOnboarding(prev => ({ ...prev, vehicleNumber: limitAgentIdentifier(e.target.value) }))}
+                                maxLength={12}
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 required
                             />
@@ -1122,7 +1125,8 @@ export function AgentDashboard({ view }) {
                             <input
                                 type="text"
                                 value={agentOnboarding.rcBookNumber}
-                                onChange={(e) => setAgentOnboarding(prev => ({ ...prev, rcBookNumber: e.target.value }))}
+                                onChange={(e) => setAgentOnboarding(prev => ({ ...prev, rcBookNumber: limitAgentIdentifier(e.target.value) }))}
+                                maxLength={12}
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 required
                             />

@@ -5,7 +5,7 @@ import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } fro
 
 const api = axios.create({
   baseURL: API_ENDPOINTS.REPORTING,
-  timeout: 60000
+  timeout: 120000
 });
 
 const REPORTING_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_REPORTING_BASE_URL, {
@@ -68,7 +68,7 @@ export const reportingService = {
       try {
         response = await axios.get(url, {
           responseType: 'blob',
-          timeout: 60000,
+          timeout: 120000,
           headers: (() => {
             const token = authStorage.getAccessToken();
             return token ? { Authorization: `Bearer ${token}` } : {};
