@@ -6,7 +6,7 @@ import com.shipfast.communication.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -23,7 +23,7 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setType(type);
         notification.setMessage(message);
         notification.setStatus("SENT");
-        notification.setCreatedAt(LocalDateTime.now());
+        notification.setCreatedAt(Instant.now());
 
         return repository.save(notification);
     }

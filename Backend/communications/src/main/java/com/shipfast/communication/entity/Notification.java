@@ -4,7 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Document(collection = "notifications")
 @Data
@@ -17,5 +17,5 @@ public class Notification {
     private String type;
     private String message;
     private String status;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 }

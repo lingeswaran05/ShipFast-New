@@ -1,6 +1,6 @@
 package com.shipfast.communication.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -41,7 +41,7 @@ public class SupportController {
             throw new RuntimeException("userId is required");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         SupportTicket ticket = new SupportTicket();
         ticket.setUserId(request.getUserId());
         ticket.setSubject(request.getSubject() == null || request.getSubject().trim().isEmpty() ? "Support Ticket" : request.getSubject().trim());
@@ -125,14 +125,14 @@ public class SupportController {
                         .senderName(request.getSenderName() == null || request.getSenderName().trim().isEmpty() ? "Support" : request.getSenderName().trim())
                         .senderRole(request.getSenderRole() == null || request.getSenderRole().trim().isEmpty() ? "admin" : request.getSenderRole().trim())
                         .message(request.getMessage().trim())
-                        .createdAt(LocalDateTime.now())
+                        .createdAt(Instant.now())
                         .build()
         );
 
         if ("CLOSED".equalsIgnoreCase(ticket.getStatus()) || "RESOLVED".equalsIgnoreCase(ticket.getStatus())) {
             ticket.setStatus("OPEN");
         }
-        ticket.setUpdatedAt(LocalDateTime.now());
+        ticket.setUpdatedAt(Instant.now());
 
         return new ApiResponse<>(
                 true,
@@ -157,7 +157,7 @@ public class SupportController {
         if (request.getAssignedToUserId() != null) {
             ticket.setAssignedToUserId(request.getAssignedToUserId());
         }
-        ticket.setUpdatedAt(LocalDateTime.now());
+        ticket.setUpdatedAt(Instant.now());
 
         return new ApiResponse<>(
                 true,

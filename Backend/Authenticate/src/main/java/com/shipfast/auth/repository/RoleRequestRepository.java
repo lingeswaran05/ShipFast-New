@@ -13,4 +13,6 @@ public interface RoleRequestRepository extends JpaRepository<RoleRequest, String
     List<RoleRequest> findByStatusInOrderByCreatedAtDesc(Collection<String> statuses);
 
     Optional<RoleRequest> findFirstByUserIdAndStatusInOrderByCreatedAtDesc(String userId, Collection<String> statuses);
+
+    Optional<RoleRequest> findFirstByUserIdOrderByCreatedAtDesc(String userId);
 }

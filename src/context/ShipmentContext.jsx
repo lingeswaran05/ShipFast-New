@@ -29,7 +29,7 @@ const DEFAULT_PRICING_CONFIG = {
   codHandlingFee: 50
 };
 const SHIPMENT_SYNC_INTERVAL_MS = 60000;
-const NOTIFICATION_SYNC_INTERVAL_MS = 120000;
+const NOTIFICATION_SYNC_INTERVAL_MS = 5000;
 
 const parseStored = (key, fallback = []) => {
   try {
@@ -904,6 +904,9 @@ export function ShipmentProvider({ children }) {
           newShipment = await mockService.createShipment(shipmentData);
         }
         setShipments(prev => [newShipment, ...prev]);
+        const tracking = newShipment?.trackingNumber || newShipment?.trackingId || newShipment?.shipmentId || newShipment?.id || 'shipment';
+        addNotification(`Shipment ${tracking} created successfully.`, 'customer', 'SUCCESS');
+        addNotification(`New shipment ${tracking} was created.`, 'admin', 'INFO');
         return newShipment;
       } catch (error) {
           console.error("Create shipment failed", error);
@@ -1013,7 +1016,12 @@ export function ShipmentProvider({ children }) {
         };
       }));
 
-      addNotification(`Shipment ${assignedShipment?.trackingNumber || assignedShipment?.shipmentId || candidateIds[0]} assigned to agent.`, 'admin');
+      const assignmentTracking = assignedShipment?.trackingNumber || assignedShipment?.shipmentId || candidateIds[0];
+      addNotification(`Shipment ${assignmentTracking} assigned to agent.`, 'admin', 'INFO');
+      addNotification(`Shipment ${assignmentTracking} assigned to you.`, 'agent', 'INFO');
+      communicationService.sendNotification(targetAgentId, 'IN_APP', `Shipment ${assignmentTracking} assigned to you.`).catch(() => {
+        // non-blocking notification persistence
+      });
       return assignedShipment;
   };
 
@@ -1185,7 +1193,7 @@ export function ShipmentProvider({ children }) {
       const primaryProfileUserId = stableIdentityCandidates[0] || '';
 
       const backendRequestStatus = primaryProfileUserId
-        ? await operationsService.getAgentRequestStatus(primaryProfileUserId)
+        ? await roleService.getMyRequestStatus()
         : null;
       const hasBackendStatus = Boolean(backendRequestStatus && typeof backendRequestStatus === 'object');
       const normalizedBackendStatus = normalizeRoleRequestStatus(backendRequestStatus?.status || 'NONE');
@@ -1263,25 +1271,21 @@ export function ShipmentProvider({ children }) {
         createdAt: new Date().toISOString()
       };
 
-      try {
-        const backendRequest = await roleService.requestRoleUpgrade(
-          request.requestedRole,
-          request.reason,
-          {
-            userId: request.userId,
-            email: request.email,
-            name: request.name,
-            agentDetails: request.agentDetails,
-            documents: request.documents
-          }
-        );
-        if (backendRequest) {
-          request.id = backendRequest.id || backendRequest.requestId || request.id;
-          request.status = normalizeRoleRequestStatus(backendRequest.status || request.status);
-          request.createdAt = backendRequest.createdAt || request.createdAt;
+      const backendRequest = await roleService.requestRoleUpgrade(
+        request.requestedRole,
+        request.reason,
+        {
+          userId: request.userId,
+          email: request.email,
+          name: request.name,
+          agentDetails: request.agentDetails,
+          documents: request.documents
         }
-      } catch (error) {
-        console.warn('Role request API unavailable. Continuing with local request flow.', error);
+      );
+      if (backendRequest) {
+        request.id = backendRequest.id || backendRequest.requestId || request.id;
+        request.status = normalizeRoleRequestStatus(backendRequest.status || request.status);
+        request.createdAt = backendRequest.createdAt || request.createdAt;
       }
 
       try {
@@ -1435,7 +1439,7 @@ export function ShipmentProvider({ children }) {
         throw new Error("Invalid request object provided.");
       }
 
-      if (requestId && !String(requestId).startsWith('rr-')) {
+      if (requestId) {
         try {
           await roleService.approveRequest(requestId);
         } catch (error) {
@@ -1532,7 +1536,7 @@ export function ShipmentProvider({ children }) {
       let roleUpdateFailed = false;
       let roleUpdateSucceeded = false;
       let lastRoleUpdateError = null;
-      const isSyntheticRequest = Boolean(requestId && String(requestId).startsWith('rr-'));
+      const isSyntheticRequest = Boolean(requestId && String(requestId).startsWith('rr-') && !requestRecord?.requestRecord);
       try {
           for (const identity of identityCandidates) {
             try {
@@ -1669,7 +1673,7 @@ export function ShipmentProvider({ children }) {
         throw new Error('Role request not found');
       }
 
-      if (requestId && !String(requestId).startsWith('rr-')) {
+      if (requestId) {
         try {
           await roleService.rejectRequest(requestId);
         } catch (error) {
@@ -2256,8 +2260,10 @@ export function ShipmentProvider({ children }) {
       const ticketRef = updated?.id || ticketId;
       addNotification(`${ticketRef} replied by ${actorName}`, 'all', 'INFO');
       try {
-        if (updated?.userId) {
+        if (String(currentUser?.role || '').toLowerCase() === 'admin' && updated?.userId) {
           await communicationService.sendNotification(updated.userId, 'IN_APP', `New reply on ${ticketRef}`);
+        } else {
+          await communicationService.sendNotification('ADMIN', 'IN_APP', `New reply on ${ticketRef} by ${actorName}`);
         }
       } catch {
         // Non-blocking notification call

@@ -105,6 +105,21 @@ const shouldUseLocalNotifications = (error) => {
 };
 
 const normalizeStatus = (status) => String(status || 'OPEN').replace(/_/g, ' ').toUpperCase();
+const normalizeTimestamp = (value) => {
+  if (!value) return new Date().toISOString();
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return new Date().toISOString();
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return `${trimmed}Z`;
+  return trimmed;
+};
+
+const formatTimestamp = (value, fallback = 'Just now') => {
+  if (!value) return fallback;
+  const date = new Date(normalizeTimestamp(value));
+  return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+};
 
 const mapNotification = (notification = {}) => ({
   id: notification.id || notification.notificationId || `n-${Date.now()}`,
@@ -113,7 +128,7 @@ const mapNotification = (notification = {}) => ({
   message: notification.message || '',
   status: notification.status || 'SENT',
   isRead: Boolean(notification.isRead),
-  timestamp: notification.createdAt ? new Date(notification.createdAt).toLocaleString() : new Date().toLocaleString(),
+  timestamp: formatTimestamp(notification.createdAt, new Date().toLocaleString()),
   role: String(notification.role || '').toLowerCase() || undefined
 });
 
@@ -123,8 +138,8 @@ const mapTicketMessage = (message = {}) => ({
   senderName: message.senderName || 'Support',
   senderRole: String(message.senderRole || 'admin').toLowerCase(),
   message: message.message || '',
-  createdAt: message.createdAt || new Date().toISOString(),
-  createdLabel: message.createdAt ? new Date(message.createdAt).toLocaleString() : 'Just now'
+  createdAt: normalizeTimestamp(message.createdAt),
+  createdLabel: formatTimestamp(message.createdAt)
 });
 
 const mapTicket = (ticket = {}) => ({
@@ -137,9 +152,9 @@ const mapTicket = (ticket = {}) => ({
   status: normalizeStatus(ticket.status),
   assignedToRole: ticket.assignedToRole || 'ADMIN',
   assignedToUserId: ticket.assignedToUserId || '',
-  lastUpdate: ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : 'Just now',
-  createdAt: ticket.createdAt || new Date().toISOString(),
-  updatedAt: ticket.updatedAt || ticket.createdAt || new Date().toISOString(),
+  lastUpdate: formatTimestamp(ticket.updatedAt),
+  createdAt: normalizeTimestamp(ticket.createdAt),
+  updatedAt: normalizeTimestamp(ticket.updatedAt || ticket.createdAt),
   messages: Array.isArray(ticket.messages) ? ticket.messages.map(mapTicketMessage) : []
 });
 

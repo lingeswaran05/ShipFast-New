@@ -1,6 +1,6 @@
 package com.shipfast.communication.entity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,5 +17,5 @@ public class SupportMessage {
     private String senderName;
     private String senderRole;
     private String message;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 }

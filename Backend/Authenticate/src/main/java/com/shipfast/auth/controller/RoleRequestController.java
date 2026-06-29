@@ -1,6 +1,7 @@
 package com.shipfast.auth.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -38,6 +39,12 @@ public class RoleRequestController {
     public ResponseEntity<ApiResponse<List<RoleRequestResponse>>> getPendingRequests() {
         List<RoleRequestResponse> response = roleRequestService.getPendingRequests();
         return ResponseEntity.ok(new ApiResponse<>(true, "Pending role requests fetched successfully", response));
+    }
+
+    @GetMapping("/requests/status")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getMyRequestStatus(Authentication authentication) {
+        Map<String, String> response = roleRequestService.getMyRequestStatus(authentication.getName());
+        return ResponseEntity.ok(new ApiResponse<>(true, "Role request status fetched successfully", response));
     }
 
     @PostMapping("/requests/{requestId}/approve")

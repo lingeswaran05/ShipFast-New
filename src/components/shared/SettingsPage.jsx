@@ -4,6 +4,7 @@ import { useShipment } from '../../context/ShipmentContext';
 import Webcam from 'react-webcam';
 import { toast } from 'sonner';
 import { operationsService } from '../../lib/operationsService';
+import { roleService } from '../../lib/roleService';
 
 export function SettingsPage() {
    const { currentUser, shipments, updateProfile, requestRoleUpgrade, cancelRoleRequest, roleRequests } = useShipment();
@@ -195,7 +196,7 @@ export function SettingsPage() {
     }
     setIsCheckingStatus(true);
     try {
-      const result = await operationsService.getAgentRequestStatus(userId);
+      const result = await roleService.getMyRequestStatus();
       setBackendRequestStatus(result || { status: 'NONE', hasPending: 'false' });
     } catch {
       setBackendRequestStatus({ status: 'NONE', hasPending: 'false' });

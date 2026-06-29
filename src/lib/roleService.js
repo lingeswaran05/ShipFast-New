@@ -79,6 +79,11 @@ export const roleService = {
     return getPayload(response);
   },
 
+  getMyRequestStatus: async () => {
+    const response = await withRoleFallback((client) => client.get('/requests/status'));
+    return getPayload(response);
+  },
+
   /**
    * Approves a role request.
    * This triggers a backend process that should update the user's role.

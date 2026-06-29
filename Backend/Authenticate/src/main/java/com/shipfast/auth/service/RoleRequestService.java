@@ -70,6 +70,23 @@ public class RoleRequestService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public Map<String, String> getMyRequestStatus(String requesterEmail) {
+        UserAuth requester = userAuthRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found"));
+
+        return roleRequestRepository.findFirstByUserIdOrderByCreatedAtDesc(requester.getUserId())
+                .map(request -> Map.of(
+                        "status", request.getStatus(),
+                        "hasPending", String.valueOf(OPEN_STATUSES.contains(request.getStatus())),
+                        "requestId", request.getRequestId()
+                ))
+                .orElseGet(() -> Map.of(
+                        "status", "NONE",
+                        "hasPending", "false"
+                ));
+    }
+
     @Transactional
     public RoleRequestResponse approveRequest(String requestId, String reviewerEmail) {
         RoleRequest request = getById(requestId);
