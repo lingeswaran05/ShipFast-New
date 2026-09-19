@@ -1,0 +1,26 @@
+name = "shipfast-backend"
+main = "worker/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# 1. Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "shipfast-d1"
+database_id = "6d091cdd-b59a-4dc8-a427-685a6cf4cc4a" # Replace with your D1 ID after running: npx wrangler d1 create shipfast-d1
+migrations_dir = "migrations"
+
+# 2. Cloudflare R2 Object Storage Binding (For parcel photos, signatures, invoices)
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "shipfast-storage" # Replace with your R2 bucket after running: npx wrangler r2 bucket create shipfast-storage
+
+# 3. Environment Variables
+[vars]
+APP_ENV = "production"
+JWT_SECRET = "c2hpcGZhc3Qtc2VjcmV0LWtleS1zaGlwZmFzdC1rZXk="
+MAIL_FROM = "ShipFast <notifications@shipfast.com>"
+
+# Optional Secrets (Set via: npx wrangler secret put RESEND_API_KEY)
+# RESEND_API_KEY = "re_..."
+# SENDGRID_API_KEY = "SG...."

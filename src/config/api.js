@@ -1,6 +1,6 @@
 const stripTrailingSlash = (value = '') => String(value || '').replace(/\/+$/, '');
-export const DEFAULT_GATEWAY_URL = 'https://shipfast-gateway-7ake.onrender.com';
-export const LOCAL_GATEWAY_URL = 'http://localhost:8088';
+export const DEFAULT_GATEWAY_URL = '';
+export const LOCAL_GATEWAY_URL = 'http://localhost:8787';
 
 export const isLocalFrontend = () => {
   if (typeof window === 'undefined') return false;
@@ -8,10 +8,13 @@ export const isLocalFrontend = () => {
 };
 
 const resolveGatewayUrl = () => {
-  if (isLocalFrontend()) {
-    return stripTrailingSlash(import.meta.env.VITE_LOCAL_API_BASE_URL || '');
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return stripTrailingSlash(import.meta.env.VITE_API_BASE_URL);
   }
-  return stripTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_GATEWAY_URL);
+  if (isLocalFrontend()) {
+    return stripTrailingSlash(import.meta.env.VITE_LOCAL_API_BASE_URL || LOCAL_GATEWAY_URL);
+  }
+  return '';
 };
 
 export const API_GATEWAY_URL = resolveGatewayUrl();
