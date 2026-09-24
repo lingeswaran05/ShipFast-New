@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:backend": "npm --prefix mern-backend run dev",
+    "start:mern": "powershell -ExecutionPolicy Bypass -File .\\start-mern.ps1",
+    "seed:backend": "npm --prefix mern-backend run seed",
     "start:all": "powershell -ExecutionPolicy Bypass -File .\\start-all-services.ps1",
     "build": "vite build",
     "lint": "eslint .",
