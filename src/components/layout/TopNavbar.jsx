@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import logoImage from '../../assets/logo.png';
 
 export function TopNavbar({ user, isSidebarOpen, setIsSidebarOpen }) {
-  const { getRoleNotifications, dismissNotification, activeRole, switchActiveRole } = useShipment();
+  const { getRoleNotifications, dismissNotification, clearAllNotifications, activeRole, switchActiveRole } = useShipment();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const notificationsDropdownRef = useRef(null);
@@ -103,7 +103,18 @@ export function TopNavbar({ user, isSidebarOpen, setIsSidebarOpen }) {
             
             {showNotifications && (
                <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up z-50">
-                  <div className="p-3 bg-slate-50 border-b border-slate-100 font-bold text-slate-700">Notifications</div>
+                  <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                    <span className="font-bold text-slate-700 text-sm">Notifications</span>
+                    {notifications.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => clearAllNotifications(effectiveRole)}
+                        className="text-xs font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
                   <div className="max-h-64 overflow-y-auto">
                      {visibleNotifications.length > 0 ? visibleNotifications.map((n) => (
                         <div key={n.id} className="p-3 border-b border-slate-50 hover:bg-slate-50 transition-colors">

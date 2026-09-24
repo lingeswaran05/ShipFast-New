@@ -47,8 +47,8 @@ foreach ($port in $servicePorts) {
 Start-Sleep -Seconds 2
 
 Start-Svc "Gateway" "Backend/Gateway" "`$env:AUTH_SERVICE_URL='http://localhost:8085'; `$env:SHIPMENT_SERVICE_URL='http://localhost:8081'; `$env:OPERATIONS_SERVICE_URL='http://localhost:8082'; `$env:ADMIN_SERVICE_URL='http://localhost:8083'; `$env:COMMUNICATIONS_SERVICE_URL='http://localhost:8086'; `$env:REPORTING_SERVICE_URL='http://localhost:8087'; .\mvnw.cmd spring-boot:run"
-Start-Svc "Auth" "Backend/Authenticate" "`$env:OPERATIONS_SERVICE_URL='http://localhost:8082'; .\mvnw.cmd spring-boot:run"
-Start-Svc "Shipment" "Backend/shipment/shipment" "`$env:OPERATIONS_SERVICE_URL='http://localhost:8082'; `$env:COMMUNICATIONS_SERVICE_URL='http://localhost:8086'; `$env:AUTH_SERVICE_URL='http://localhost:8085'; .\mvnw.cmd spring-boot:run"
+Start-Svc "Auth" "Backend/Authenticate" "`$env:OPERATIONS_SERVICE_URL='http://localhost:8082'; `$env:MAIL_USERNAME='linwan2508@gmail.com'; `$env:MAIL_PASSWORD='wwipxuylrsegganx'; .\mvnw.cmd spring-boot:run"
+Start-Svc "Shipment" "Backend/shipment/shipment" "`$env:OPERATIONS_SERVICE_URL='http://localhost:8082'; `$env:COMMUNICATIONS_SERVICE_URL='http://localhost:8086'; `$env:AUTH_SERVICE_URL='http://localhost:8085'; `$env:MAIL_USERNAME='linwan2508@gmail.com'; `$env:MAIL_PASSWORD='wwipxuylrsegganx'; .\mvnw.cmd spring-boot:run"
 Start-Svc "Operations" "Backend/operations/operations" ".\mvnw.cmd spring-boot:run"
 Start-Svc "Admin" "Backend/admin" ".\mvnw.cmd spring-boot:run"
 Start-Svc "Communications" "Backend/communications" ".\mvnw.cmd spring-boot:run"

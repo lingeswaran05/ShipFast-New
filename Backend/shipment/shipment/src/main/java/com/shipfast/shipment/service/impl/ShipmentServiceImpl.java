@@ -524,36 +524,34 @@ public class ShipmentServiceImpl implements ShipmentService {
         );
 
         byte[] invoice = invoiceService.generateInvoice(shipment);
+        byte[] pod = decodeDataUrl(shipment.getProofOfDeliveryImage());
+
+        List<EmailService.EmailAttachment> attachments = new ArrayList<>();
+        if (invoice != null && invoice.length > 0) {
+            attachments.add(new EmailService.EmailAttachment(
+                    "Invoice-" + tracking + ".png",
+                    invoice,
+                    "image/png"
+            ));
+        }
+        if (pod != null && pod.length > 0) {
+            attachments.add(new EmailService.EmailAttachment(
+                    "Proof-of-Delivery-" + tracking + podExtension(shipment.getProofOfDeliveryImage()),
+                    pod,
+                    podContentType(shipment.getProofOfDeliveryImage())
+            ));
+        }
+
         for (String recipient : recipients) {
             try {
                 emailService.sendEmail(
                         recipient,
                         "Shipment Status: Delivered - " + tracking,
                         body,
-                        invoice,
-                        "Invoice-" + tracking + ".png",
-                        "image/png"
+                        attachments
                 );
             } catch (RuntimeException ex) {
                 System.err.println("Failed to send delivery email to " + recipient + ": " + ex.getMessage());
-            }
-        }
-
-        byte[] pod = decodeDataUrl(shipment.getProofOfDeliveryImage());
-        if (pod != null && pod.length > 0) {
-            for (String recipient : recipients) {
-                try {
-                    emailService.sendEmail(
-                            recipient,
-                            "Proof of Delivery - " + tracking,
-                            "Proof of delivery for shipment " + tracking + " is attached.",
-                            pod,
-                            "Proof-of-Delivery-" + tracking + podExtension(shipment.getProofOfDeliveryImage()),
-                            podContentType(shipment.getProofOfDeliveryImage())
-                    );
-                } catch (RuntimeException ex) {
-                    System.err.println("Failed to send proof of delivery email to " + recipient + ": " + ex.getMessage());
-                }
             }
         }
     }

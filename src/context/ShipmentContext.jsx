@@ -2201,6 +2201,39 @@ export function ShipmentProvider({ children }) {
     setNotifications((prev) => prev.filter((item) => String(item?.id || '').trim() !== normalizedId));
   };
 
+  const clearAllNotifications = (role = null) => {
+    const roleToClear = role ? String(role).toLowerCase() : null;
+    setNotifications((prev) => {
+      const idsToDismiss = prev
+        .filter((n) => {
+          if (!roleToClear || roleToClear === 'all') return true;
+          const nRole = String(n?.role || 'all').toLowerCase();
+          return !nRole || nRole === roleToClear || nRole === 'all';
+        })
+        .map((n) => String(n?.id || '').trim())
+        .filter(Boolean);
+
+      if (idsToDismiss.length > 0) {
+        setDismissedNotificationIds((old) => {
+          const next = [...new Set([...idsToDismiss, ...old])].slice(0, 500);
+          safeSetLocalStorage(DISMISSED_NOTIFICATIONS_KEY, JSON.stringify(next));
+          return next;
+        });
+      }
+
+      if (!roleToClear || roleToClear === 'all') return [];
+      return prev.filter((n) => {
+        const nRole = String(n?.role || 'all').toLowerCase();
+        return nRole && nRole !== roleToClear && nRole !== 'all';
+      });
+    });
+    try {
+      localStorage.removeItem('sf_local_notifications');
+    } catch {
+      // non-blocking
+    }
+  };
+
   const notifyAdminFromAgent = async (message) => {
       const text = String(message || '').trim();
       if (!text) throw new Error('Message is required');
@@ -2432,6 +2465,7 @@ export function ShipmentProvider({ children }) {
       activeRole,
       switchActiveRole,
       dismissNotification,
+      clearAllNotifications,
       notifyAdminFromAgent,
       updatePricingConfig,
       calculateRate,
