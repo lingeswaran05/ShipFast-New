@@ -31,16 +31,28 @@ export async function closeDb() {
   }
 }
 
-// Query cursor wrapper supporting chaining .sort(), .limit(), .skip(), .lean(), and thenable/await
+// Helper to normalize update objects with atomic operators if needed
+function normalizeUpdate(update) {
+  if (!update || typeof update !== 'object') return update;
+  const keys = Object.keys(update);
+  const hasOperator = keys.some(k => k.startsWith('$'));
+  if (hasOperator) {
+    return update;
+  }
+  return { $set: update };
+}
+
+// Query cursor wrapper supporting chaining .sort(), .limit(), .skip(), .lean(), .select(), and thenable/await
 class QueryCursor {
-  constructor(getColFn, filter = {}, options = {}) {
+  constructor(getColFn, filter = {}, options = {}, isSingle = false) {
     this._getColFn = getColFn;
     this._filter = filter || {};
     this._options = options || {};
     this._sort = null;
-    this._limit = null;
+    this._limit = isSingle ? 1 : null;
     this._skip = null;
     this._isLean = false;
+    this._isSingle = isSingle;
     this._docWrapper = null;
   }
 
@@ -55,12 +67,25 @@ class QueryCursor {
   }
 
   limit(num) {
-    this._limit = num;
+    if (!this._isSingle) {
+      this._limit = num;
+    }
     return this;
   }
 
   skip(num) {
     this._skip = num;
+    return this;
+  }
+
+  select(projection) {
+    if (projection && typeof projection === 'object') {
+      this._options = { ...this._options, projection };
+    }
+    return this;
+  }
+
+  populate() {
     return this;
   }
 
@@ -77,6 +102,12 @@ class QueryCursor {
     if (this._limit) cursor = cursor.limit(this._limit);
 
     const docs = await cursor.toArray();
+    if (this._isSingle) {
+      if (!docs || docs.length === 0) return null;
+      if (this._isLean || !this._docWrapper) return docs[0];
+      return this._docWrapper(docs[0]);
+    }
+
     if (this._isLean || !this._docWrapper) {
       return docs || [];
     }
@@ -158,20 +189,20 @@ export function createModel(collectionName, methods = {}, defaults = {}) {
   Model.collectionName = collectionName;
 
   Model.find = function (filter = {}, projection = null, options = {}) {
-    const q = new QueryCursor(getCol, filter, options);
+    const opts = projection ? { ...options, projection } : options;
+    const q = new QueryCursor(getCol, filter, opts, false);
     q.setDocWrapper(wrapDoc);
     return q;
   };
 
-  Model.findOne = async function (filter = {}, projection = null, options = {}) {
-    const col = await getCol();
-    let query = col.find(filter, options);
-    const docs = await query.limit(1).toArray();
-    if (!docs || docs.length === 0) return null;
-    return wrapDoc(docs[0]);
+  Model.findOne = function (filter = {}, projection = null, options = {}) {
+    const opts = projection ? { ...options, projection } : options;
+    const q = new QueryCursor(getCol, filter, opts, true);
+    q.setDocWrapper(wrapDoc);
+    return q;
   };
 
-  Model.findById = async function (id, projection = null, options = {}) {
+  Model.findById = function (id, projection = null, options = {}) {
     return Model.findOne({ $or: [{ _id: id }, { id: id }, { userId: id }] }, projection, options);
   };
 
@@ -195,17 +226,22 @@ export function createModel(collectionName, methods = {}, defaults = {}) {
 
   Model.updateOne = async function (filter, update, options = {}) {
     const col = await getCol();
-    return col.updateOne(filter, update, options);
+    const normalized = normalizeUpdate(update);
+    return col.updateOne(filter, normalized, options);
   };
 
   Model.updateMany = async function (filter, update, options = {}) {
     const col = await getCol();
-    return col.updateMany(filter, update, options);
+    const normalized = normalizeUpdate(update);
+    return col.updateMany(filter, normalized, options);
   };
 
-  Model.findOneAndUpdate = async function (filter, update, options = { returnDocument: 'after' }) {
+  Model.findOneAndUpdate = async function (filter, update, options = {}) {
     const col = await getCol();
-    const res = await col.findOneAndUpdate(filter, update, { returnDocument: 'after', ...options });
+    const normalized = normalizeUpdate(update);
+    const returnDocument = (options.new || options.returnDocument === 'after') ? 'after' : 'before';
+    const opts = { ...options, returnDocument };
+    const res = await col.findOneAndUpdate(filter, normalized, opts);
     const val = res?.value || res;
     return wrapDoc(val);
   };
