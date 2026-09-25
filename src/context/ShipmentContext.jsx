@@ -28,8 +28,8 @@ const DEFAULT_PRICING_CONFIG = {
   gstPct: 5,
   codHandlingFee: 50
 };
-const SHIPMENT_SYNC_INTERVAL_MS = 60000;
-const NOTIFICATION_SYNC_INTERVAL_MS = 5000;
+const SHIPMENT_SYNC_INTERVAL_MS = 3000;
+const NOTIFICATION_SYNC_INTERVAL_MS = 3000;
 
 const parseStored = (key, fallback = []) => {
   try {
@@ -790,6 +790,42 @@ export function ShipmentProvider({ children }) {
     };
     fetchData();
   }, []);
+
+  // Background auto-sync and tab-focus refresh so data is always fresh without manual browser refresh
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const performBackgroundSync = async () => {
+      try {
+        await refreshShipments({ force: true });
+        if (currentUser.role === 'admin') {
+          await Promise.allSettled([
+            loadUsersFromDb(),
+            loadAdminOperationalData()
+          ]);
+        }
+      } catch (e) {
+        console.warn('Background sync error:', e);
+      }
+    };
+
+    const interval = setInterval(performBackgroundSync, 10000);
+
+    const handleWindowFocus = () => {
+      if (document.visibilityState === 'visible') {
+        performBackgroundSync();
+      }
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleWindowFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleWindowFocus);
+    };
+  }, [currentUser?.role, currentUser?.userId, currentUser?.id, currentUser?.email]);
 
   const login = async (email, password) => {
     try {

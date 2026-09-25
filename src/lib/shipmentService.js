@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
-import { authStorage } from './authService';
+import { authStorage, attachAuthInterceptors } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const api = axios.create({
@@ -11,59 +11,7 @@ const api = axios.create({
   }
 });
 
-const SHIPMENT_BASE_CANDIDATES = resolveServiceBaseUrls(import.meta.env.VITE_SHIPMENT_BASE_URL, {
-  defaultBaseUrl: API_ENDPOINTS.SHIPMENT
-});
-const SHIPMENT_BASE_URLS = SHIPMENT_BASE_CANDIDATES
-  .map((base) => toServiceBaseUrl(base, API_BASE_PATHS.SHIPMENT))
-  .filter((value, index, list) => list.indexOf(value) === index);
-
-let activeShipmentBaseIndex = 0;
-const setActiveShipmentBase = (index) => {
-  activeShipmentBaseIndex = index;
-  api.defaults.baseURL = SHIPMENT_BASE_URLS[index] || SHIPMENT_BASE_URLS[0];
-};
-
-const withShipmentBaseFallback = async (requestFactory, options = {}) => {
-  const { retryOnFailure = true } = options;
-  let lastError;
-  for (let offset = 0; offset < SHIPMENT_BASE_URLS.length; offset += 1) {
-    const index = (activeShipmentBaseIndex + offset) % SHIPMENT_BASE_URLS.length;
-    setActiveShipmentBase(index);
-    try {
-      const response = await requestFactory(api);
-      if (response?.data && typeof response.data.status === 'boolean' && response.data.status === false) {
-        const error = new Error(response.data.message || 'API reported failure');
-        error.response = response;
-        throw error;
-      }
-      return response;
-    } catch (error) {
-      lastError = error;
-      const shouldRetry = retryOnFailure && shouldRetryWithFallback(error) && offset < SHIPMENT_BASE_URLS.length - 1;
-      if (!shouldRetry) throw error;
-    }
-  }
-  throw lastError;
-};
-
-const endpointAvailability = {
-  list: true,
-  mine: true,
-  create: true,
-  update: true,
-  rate: true,
-  pricing: true
-};
-
-api.interceptors.request.use((config) => {
-  const token = authStorage.getAccessToken();
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+attachAuthInterceptors(api);
 
 const splitAddress = (value = '') => {
   const parts = String(value || '').split(',').map((item) => item.trim()).filter(Boolean);

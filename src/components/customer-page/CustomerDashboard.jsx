@@ -1,11 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, Truck, Search, CreditCard, ChevronRight, PlusCircle, Calculator, X, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useShipment } from '../../context/ShipmentContext';
 
 export function CustomerDashboard() {
   const navigate = useNavigate();
-  const { shipments } = useShipment();
+  const { shipments, refreshShipments } = useShipment();
+
+  useEffect(() => {
+    if (typeof refreshShipments === 'function') {
+      refreshShipments({ force: true });
+    }
+  }, []);
   const [showCalculator, setShowCalculator] = useState(false);
   const [calcData, setCalcData] = useState({ weight: '', source: '', destination: '', type: 'Standard' });
   const [calculatedRate, setCalculatedRate] = useState(null);

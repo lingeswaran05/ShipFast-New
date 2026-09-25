@@ -104,11 +104,21 @@ export function AdminDashboard({ view }) {
         removeUserAccess,
         updatePricingConfig,
         refreshOperationalData,
+        refreshShipments,
         createSupportTicket,
         deleteShipment,
         deleteAllShipments,
         assignShipmentToAgent
     } = useShipment();
+
+  useEffect(() => {
+    if (typeof refreshOperationalData === 'function') {
+      refreshOperationalData();
+    }
+    if (typeof refreshShipments === 'function') {
+      refreshShipments({ force: true });
+    }
+  }, [view]);
   
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [showVehicleModal, setShowVehicleModal] = useState(false);

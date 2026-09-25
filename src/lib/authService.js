@@ -154,61 +154,80 @@ const mapAnyUserToCurrentUser = (user = {}) => ({
   profilePic: user.profilePic || user.profileImage || null
 });
 
-const isRefreshRoute = (url = '') => url.includes('/refresh-token');
+const isRefreshRoute = (url = '') => String(url || '').includes('/refresh-token') || String(url || '').includes('/login');
 
-api.interceptors.request.use((config) => {
-  const token = authStorage.getAccessToken();
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+export const getFreshAccessToken = async () => {
+  const refreshToken = authStorage.getRefreshToken();
+  if (!refreshToken) {
+    authStorage.clear();
+    return null;
   }
-  return config;
-});
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error?.config;
-    if (!originalRequest) throw error;
-
-    const status = error?.response?.status;
-    if (status !== 401 || originalRequest._retry || isRefreshRoute(originalRequest.url)) {
-      throw error;
-    }
-
-    const refreshToken = authStorage.getRefreshToken();
-    if (!refreshToken) {
-      authStorage.clear();
-      throw error;
-    }
-
-    originalRequest._retry = true;
-
-    if (!refreshPromise) {
-      refreshPromise = axios
-        .post(`${api.defaults.baseURL || ''}/api/v1/auth/refresh-token`, { refreshToken })
-        .then((response) => {
-          const payload = getResponsePayload(response);
-          const tokens = extractTokens(payload);
-          if (!tokens.accessToken) throw new Error('Session expired. Please login again.');
-          authStorage.setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken || refreshToken });
-          return tokens.accessToken;
-        })
-        .catch((refreshError) => {
-          authStorage.clear();
-          throw refreshError;
-        })
-        .finally(() => {
-          refreshPromise = null;
-        });
-    }
-
-    const nextAccessToken = await refreshPromise;
-    originalRequest.headers = originalRequest.headers || {};
-    originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;
-    return api(originalRequest);
+  if (!refreshPromise) {
+    const refreshUrl = `${API_GATEWAY_URL || ''}/api/v1/auth/refresh-token`;
+    refreshPromise = axios
+      .post(refreshUrl, { refreshToken }, { headers: { 'Content-Type': 'application/json' } })
+      .then((response) => {
+        const payload = getResponsePayload(response);
+        const tokens = extractTokens(payload);
+        if (!tokens.accessToken) throw new Error('Session expired. Please login again.');
+        authStorage.setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken || refreshToken });
+        return tokens.accessToken;
+      })
+      .catch((refreshError) => {
+        authStorage.clear();
+        throw refreshError;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
   }
-);
+
+  return await refreshPromise;
+};
+
+export const attachAuthInterceptors = (axiosInstance) => {
+  axiosInstance.interceptors.request.use((config) => {
+    const token = authStorage.getAccessToken();
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error?.config;
+      if (!originalRequest) throw error;
+
+      const status = error?.response?.status;
+      if (status !== 401 || originalRequest._retry || isRefreshRoute(originalRequest.url)) {
+        throw error;
+      }
+
+      const refreshToken = authStorage.getRefreshToken();
+      if (!refreshToken) {
+        throw error;
+      }
+
+      originalRequest._retry = true;
+
+      try {
+        const nextAccessToken = await getFreshAccessToken();
+        if (!nextAccessToken) throw error;
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;
+        return axiosInstance(originalRequest);
+      } catch (refreshErr) {
+        throw refreshErr;
+      }
+    }
+  );
+};
+
+attachAuthInterceptors(api);
 
 export const authService = {
   async login(email, password) {

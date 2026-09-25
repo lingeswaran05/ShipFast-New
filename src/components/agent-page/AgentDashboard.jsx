@@ -146,6 +146,12 @@ export function AgentDashboard({ view }) {
         rcBookCopy: null
     });
     const [isAgentProfileLoading, setIsAgentProfileLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof refreshShipments === 'function') {
+      refreshShipments({ force: true });
+    }
+  }, [view, activeTab]);
   
   // Shift Timer Logic
   const [shiftDuration, setShiftDuration] = useState('00:00');

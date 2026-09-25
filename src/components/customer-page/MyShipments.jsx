@@ -9,7 +9,13 @@ import { ConfirmationModal } from '../shared/ConfirmationModal';
 
 export function MyShipments() {
   const navigate = useNavigate();
-  const { shipments, cancelShipment, deleteShipment, rateShipment } = useShipment();
+  const { shipments, refreshShipments, cancelShipment, deleteShipment, rateShipment } = useShipment();
+
+  useEffect(() => {
+    if (typeof refreshShipments === 'function') {
+      refreshShipments({ force: true });
+    }
+  }, []);
   const [activeModal, setActiveModal] = useState(null);
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

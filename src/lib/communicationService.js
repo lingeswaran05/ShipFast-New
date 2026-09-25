@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
-import { authStorage } from './authService';
+import { authStorage, attachAuthInterceptors } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const COMM_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_COMM_BASE_URL, {
@@ -77,17 +77,8 @@ const withSupportFallback = async (requestFactory, options = {}) => {
   throw lastError;
 };
 
-const authInterceptor = (config) => {
-  const token = authStorage.getAccessToken();
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-};
-
-notificationsApi.interceptors.request.use(authInterceptor);
-supportApi.interceptors.request.use(authInterceptor);
+attachAuthInterceptors(notificationsApi);
+attachAuthInterceptors(supportApi);
 
 const getPayload = (response) => response?.data?.data ?? response?.data ?? {};
 

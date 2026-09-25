@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_PATHS, API_ENDPOINTS } from '../config/api';
-import { authStorage } from './authService';
+import { authStorage, attachAuthInterceptors } from './authService';
 import { resolveServiceBaseUrls, toServiceBaseUrl, shouldRetryWithFallback } from './apiConfig';
 
 const ROLE_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_AUTH_BASE_URL, {
@@ -16,6 +16,8 @@ const api = axios.create({
     'Content-Type': 'application/json'
   }
 });
+
+attachAuthInterceptors(api);
 
 let activeRoleBaseIndex = 0;
 const setActiveRoleBase = (index) => {
@@ -39,15 +41,6 @@ const withRoleFallback = async (requestFactory, options = {}) => {
   }
   throw lastError;
 };
-
-api.interceptors.request.use((config) => {
-  const token = authStorage.getAccessToken();
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 /**
  * Service to handle all role-related API interactions.
