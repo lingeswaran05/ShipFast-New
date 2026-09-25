@@ -7,7 +7,25 @@ import { generateRunSheetId, generateCollectionId } from '../utils/idGenerators.
 
 export const createAgent = async (req, res, next) => {
   try {
-    const { userId, name, fullName, email, phone, phoneNumber, vehicleType, vehicleNumber, licenseNumber, experience, hubId, assignedZone } = req.body;
+    const {
+      userId,
+      name,
+      fullName,
+      email,
+      phone,
+      phoneNumber,
+      vehicleType,
+      vehicleNumber,
+      licenseNumber,
+      rcBookNumber,
+      aadharNumber,
+      bloodType,
+      organDonor,
+      shiftTiming,
+      experience,
+      hubId,
+      assignedZone
+    } = req.body;
 
     const agent = new AgentProfile({
       userId: userId || email,
@@ -18,10 +36,16 @@ export const createAgent = async (req, res, next) => {
       vehicleType: vehicleType || 'Bike',
       vehicleNumber: vehicleNumber || '',
       licenseNumber: licenseNumber || '',
+      rcBookNumber: rcBookNumber || '',
+      aadharNumber: aadharNumber || '',
+      bloodType: bloodType || '',
+      organDonor: Boolean(organDonor),
+      shiftTiming: shiftTiming || 'Day',
       experience: experience || '',
       hubId: hubId || '',
       assignedZone: assignedZone || '',
-      status: 'VERIFIED'
+      status: 'VERIFIED',
+      verificationStatus: 'VERIFIED'
     });
 
     await agent.save();
@@ -85,13 +109,17 @@ export const upsertAgentProfile = async (req, res, next) => {
     const normalized = decodeURIComponent(userId);
     const updateData = { ...req.body };
 
+    const status = updateData.verificationStatus || updateData.status || 'PENDING';
+
     const agent = await AgentProfile.findOneAndUpdate(
       { $or: [{ userId: normalized }, { agentId: normalized }, { email: normalized.toLowerCase() }] },
       {
         $set: {
           ...updateData,
           userId: normalized,
-          agentId: updateData.agentId || normalized
+          agentId: updateData.agentId || normalized,
+          status,
+          verificationStatus: status
         }
       },
       { upsert: true, new: true }
@@ -107,7 +135,7 @@ export const verifyAgentProfile = async (req, res, next) => {
   try {
     const { userId } = req.params;
     const normalized = decodeURIComponent(userId);
-    const { status, verifiedBy, rejectionReason } = req.body;
+    const { verified, status, verificationStatus, verifiedBy, verificationNotes, rejectionReason } = req.body;
 
     const agent = await AgentProfile.findOne({
       $or: [{ userId: normalized }, { agentId: normalized }, { email: normalized.toLowerCase() }]
@@ -117,15 +145,22 @@ export const verifyAgentProfile = async (req, res, next) => {
       return res.status(404).json({ status: false, message: 'Agent profile not found' });
     }
 
-    agent.status = status || 'VERIFIED';
+    let targetStatus = verificationStatus || status;
+    if (!targetStatus) {
+      targetStatus = verified ? 'VERIFIED' : 'REJECTED';
+    }
+
+    agent.status = targetStatus;
+    agent.verificationStatus = targetStatus;
     agent.verifiedAt = new Date();
     agent.verifiedBy = verifiedBy || req.user?.email || 'ADMIN';
+    if (verificationNotes) agent.verificationNotes = verificationNotes;
     if (rejectionReason) agent.rejectionReason = rejectionReason;
 
     await agent.save();
 
-    // If verified, update User role to AGENT / DRIVER
-    if (agent.status === 'VERIFIED') {
+    // If verified, update User role to AGENT
+    if (targetStatus === 'VERIFIED') {
       await User.findOneAndUpdate(
         { $or: [{ userId: normalized }, { email: normalized.toLowerCase() }] },
         { role: 'AGENT' }
@@ -151,9 +186,11 @@ export const checkAgentRequestStatus = async (req, res, next) => {
       return res.status(200).json({ status: 'NONE', hasPending: 'false' });
     }
 
+    const currentStatus = agent.verificationStatus || agent.status || 'NONE';
+
     return res.status(200).json({
-      status: agent.status,
-      hasPending: agent.status === 'PENDING' ? 'true' : 'false'
+      status: currentStatus,
+      hasPending: currentStatus === 'PENDING' ? 'true' : 'false'
     });
   } catch (error) {
     next(error);
@@ -194,7 +231,9 @@ export const recordAgentRating = async (req, res, next) => {
     const curr = agent.rating || 5.0;
 
     agent.rating = Math.round(((curr * count + numRating) / (count + 1)) * 10) / 10;
+    agent.averageRating = agent.rating;
     agent.ratingCount = count + 1;
+    agent.totalRatings = count + 1;
     await agent.save();
 
     return res.status(200).json(agent.toDto());

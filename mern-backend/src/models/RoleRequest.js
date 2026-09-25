@@ -22,6 +22,10 @@ const RoleRequestSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    currentRole: {
+      type: String,
+      default: 'customer'
+    },
     requestedRole: {
       type: String,
       required: true,
@@ -68,6 +72,14 @@ const RoleRequestSchema = new mongoose.Schema(
     experience: {
       type: String,
       default: ''
+    },
+    agentDetails: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+    documents: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
     }
   },
   {
@@ -76,23 +88,51 @@ const RoleRequestSchema = new mongoose.Schema(
 );
 
 RoleRequestSchema.methods.toDto = function () {
+  const details = this.agentDetails || {};
+  const docs = this.documents || {};
+
   return {
     id: this.requestId,
     requestId: this.requestId,
     userId: this.userId,
     userEmail: this.userEmail,
+    email: this.userEmail,
     userName: this.userName,
+    name: this.userName,
+    currentRole: this.currentRole || 'customer',
     requestedRole: this.requestedRole,
     reason: this.reason,
     status: this.status,
     reviewedBy: this.reviewedBy,
     reviewedAt: this.reviewedAt,
     comments: this.comments,
-    phone: this.phone,
-    vehicleType: this.vehicleType,
-    vehicleNumber: this.vehicleNumber,
-    licenseNumber: this.licenseNumber,
-    experience: this.experience,
+    rejectionReason: this.comments || '',
+    phone: this.phone || details.phone || '',
+    vehicleType: this.vehicleType || details.vehicleType || '',
+    vehicleNumber: this.vehicleNumber || details.vehicleNumber || '',
+    licenseNumber: this.licenseNumber || details.licenseNumber || '',
+    experience: this.experience || details.experience || '',
+    agentDetails: {
+      licenseNumber: details.licenseNumber || this.licenseNumber || '',
+      aadharNumber: details.aadharNumber || '',
+      vehicleNumber: details.vehicleNumber || this.vehicleNumber || '',
+      rcBookNumber: details.rcBookNumber || '',
+      bloodType: details.bloodType || '',
+      organDonor: Boolean(details.organDonor),
+      bankAccountHolder: details.bankAccountHolder || '',
+      bankAccountNumber: details.bankAccountNumber || '',
+      bankIfsc: details.bankIfsc || '',
+      bankName: details.bankName || '',
+      shiftTiming: details.shiftTiming || 'Day',
+      ...details
+    },
+    documents: {
+      profilePhoto: docs.profilePhoto || null,
+      aadharCopy: docs.aadharCopy || null,
+      licenseCopy: docs.licenseCopy || null,
+      rcBookCopy: docs.rcBookCopy || null,
+      ...docs
+    },
     createdAt: this.createdAt,
     updatedAt: this.updatedAt
   };

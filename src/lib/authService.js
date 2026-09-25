@@ -14,6 +14,24 @@ const ACCESS_TOKEN_KEY = 'sf_access_token';
 const REFRESH_TOKEN_KEY = 'sf_refresh_token';
 const CURRENT_USER_KEY = 'currentUser';
 
+authClient.interceptors.request.use((config) => {
+  try {
+    const raw = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = raw ? JSON.parse(raw) : null;
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 const api = authClient ;
 
 let refreshPromise = null;

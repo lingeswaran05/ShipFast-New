@@ -393,18 +393,22 @@ export function AdminDashboard({ view }) {
       const normalizeRole = (value) => String(value || 'agent').toLowerCase();
       const normalizeStatus = (value) => String(value || 'PENDING').toUpperCase();
 
-      let pendingRequests = [];
+      let pendingRequests = null;
       try {
         const payload = await roleService.getPendingRequests();
         if (Array.isArray(payload)) pendingRequests = payload;
         else if (Array.isArray(payload?.requests)) pendingRequests = payload.requests;
         else if (Array.isArray(payload?.content)) pendingRequests = payload.content;
-      } catch {
-        pendingRequests = [];
+      } catch (err) {
+        // Non-blocking: keep existing state on transient failure
+      }
+
+      if (!pendingRequests) {
+        return;
       }
 
       const checks = await Promise.allSettled(
-        (pendingRequests || []).map(async (request) => {
+        pendingRequests.map(async (request) => {
           const requestId = request?.id || request?.requestId || request?._id;
           const userId = request?.userId || request?.user?.userId || request?.user?.id || request?.user?.email;
           const email = request?.email || request?.user?.email || '';
@@ -413,10 +417,12 @@ export function AdminDashboard({ view }) {
           if (!identity) return null;
 
           let profile = null;
-          try {
-            profile = await operationsService.getAgentProfile(identity);
-          } catch {
-            profile = null;
+          if (!request?.agentDetails?.licenseNumber && !request?.documents?.licenseCopy) {
+            try {
+              profile = await operationsService.getAgentProfile(identity);
+            } catch {
+              profile = null;
+            }
           }
           const localDocs = getLocalAgentDocs({ userId: identity, email });
 

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectDB } from './src/config/db.js';
 
 // Load environment variables
@@ -21,9 +22,26 @@ import { errorHandler } from './src/middleware/errorHandler.js';
 const app = express();
 const PORT = process.env.PORT || 8088;
 
-// Connect to Database
+// Connect to Database on boot
 connectDB().catch((err) => {
-  console.warn('⚠️ MongoDB connection deferred:', err.message);
+  console.warn('⚠️ Initial MongoDB connection deferred:', err.message);
+});
+
+// Middleware to ensure DB connection is ready before processing requests
+app.use(async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/') return next();
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
+    next();
+  } catch (err) {
+    console.error('Database connection error in request pipeline:', err.message);
+    return res.status(503).json({
+      status: false,
+      message: 'Database connection is currently initializing. Please try again in a few moments.'
+    });
+  }
 });
 
 // Configure CORS

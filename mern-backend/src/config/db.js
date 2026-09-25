@@ -11,8 +11,10 @@ export const connectDB = async () => {
 
   try {
     const opts = {
-      bufferCommands: false,
+      bufferCommands: true,
       autoIndex: true,
+      serverSelectionTimeoutMS: 15000,
+      connectTimeoutMS: 15000
     };
 
     const conn = await mongoose.connect(uri, opts);
