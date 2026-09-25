@@ -139,4 +139,4 @@ UserSchema.methods.toProfileDto = function () {
   };
 };
 
-export const User = mongoose.models.User || mongoose.model('User', UserSchema);
+export const User = mongoose.models?.User || mongoose.model('User', UserSchema);

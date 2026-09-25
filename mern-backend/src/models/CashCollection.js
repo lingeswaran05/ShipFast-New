@@ -66,4 +66,4 @@ CashCollectionSchema.methods.toDto = function () {
   };
 };
 
-export const CashCollection = mongoose.models.CashCollection || mongoose.model('CashCollection', CashCollectionSchema);
+export const CashCollection = mongoose.models?.CashCollection || mongoose.model('CashCollection', CashCollectionSchema);

@@ -63,4 +63,4 @@ RunSheetSchema.methods.toDto = function () {
   };
 };
 
-export const RunSheet = mongoose.models.RunSheet || mongoose.model('RunSheet', RunSheetSchema);
+export const RunSheet = mongoose.models?.RunSheet || mongoose.model('RunSheet', RunSheetSchema);

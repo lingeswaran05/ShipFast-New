@@ -53,4 +53,4 @@ PricingConfigSchema.methods.toDto = function () {
   };
 };
 
-export const PricingConfig = mongoose.models.PricingConfig || mongoose.model('PricingConfig', PricingConfigSchema);
+export const PricingConfig = mongoose.models?.PricingConfig || mongoose.model('PricingConfig', PricingConfigSchema);

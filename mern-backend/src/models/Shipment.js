@@ -172,4 +172,4 @@ ShipmentSchema.methods.toDto = function () {
   };
 };
 
-export const Shipment = mongoose.models.Shipment || mongoose.model('Shipment', ShipmentSchema);
+export const Shipment = mongoose.models?.Shipment || mongoose.model('Shipment', ShipmentSchema);

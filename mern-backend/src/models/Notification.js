@@ -54,4 +54,4 @@ NotificationSchema.methods.toDto = function () {
   };
 };
 
-export const Notification = mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);
+export const Notification = mongoose.models?.Notification || mongoose.model('Notification', NotificationSchema);

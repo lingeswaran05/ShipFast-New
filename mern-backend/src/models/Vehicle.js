@@ -74,4 +74,4 @@ VehicleSchema.methods.toDto = function () {
   };
 };
 
-export const Vehicle = mongoose.models.Vehicle || mongoose.model('Vehicle', VehicleSchema);
+export const Vehicle = mongoose.models?.Vehicle || mongoose.model('Vehicle', VehicleSchema);

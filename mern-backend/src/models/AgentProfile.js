@@ -141,4 +141,4 @@ AgentProfileSchema.methods.toDto = function () {
   };
 };
 
-export const AgentProfile = mongoose.models.AgentProfile || mongoose.model('AgentProfile', AgentProfileSchema);
+export const AgentProfile = mongoose.models?.AgentProfile || mongoose.model('AgentProfile', AgentProfileSchema);

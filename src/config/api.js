@@ -11,7 +11,7 @@ const resolveGatewayUrl = () => {
   if (isLocalFrontend()) {
     return stripTrailingSlash(import.meta.env.VITE_LOCAL_API_BASE_URL || '');
   }
-  return stripTrailingSlash(import.meta.env.VITE_API_BASE_URL || DEFAULT_GATEWAY_URL);
+  return stripTrailingSlash(import.meta.env.VITE_API_BASE_URL ?? '');
 };
 
 export const API_GATEWAY_URL = resolveGatewayUrl();

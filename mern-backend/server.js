@@ -93,11 +93,15 @@ app.use('/api/reports', reportingRoutes);
 app.use(errorHandler);
 
 // Start server if run directly (not serverless)
-if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`🚀 ShipFast MERN Backend running on http://localhost:${PORT}`);
-    console.log(`📡 Endpoints active: Auth, Roles, Shipments, Operations, Admin, Communications, Reporting`);
-  });
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL && !process.env.CLOUDFLARE && typeof process.env.WORKER === 'undefined') {
+  try {
+    app.listen(PORT, () => {
+      console.log(`🚀 ShipFast MERN Backend running on http://localhost:${PORT}`);
+      console.log(`📡 Endpoints active: Auth, Roles, Shipments, Operations, Admin, Communications, Reporting`);
+    });
+  } catch (e) {
+    // serverless runtime
+  }
 }
 
 export default app;

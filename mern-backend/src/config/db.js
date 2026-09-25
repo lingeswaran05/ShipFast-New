@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 
 let cachedConnection = null;
 
-export const connectDB = async () => {
-  if (cachedConnection && mongoose.connection.readyState >= 1) {
+export const connectDB = async (customUri) => {
+  if (cachedConnection && mongoose.connection?.readyState >= 1) {
     return cachedConnection;
   }
 
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/shipfast';
+  const uri = customUri || process.env.MONGODB_URI || 'mongodb+srv://lingesw0561_db_user:wYzDBE5eeNyKdiMI@shipfastcluster.6pkdcqc.mongodb.net/shipfast?retryWrites=true&w=majority';
 
   try {
     const opts = {

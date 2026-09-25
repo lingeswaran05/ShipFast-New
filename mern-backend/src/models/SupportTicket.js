@@ -100,4 +100,4 @@ SupportTicketSchema.methods.toDto = function () {
   };
 };
 
-export const SupportTicket = mongoose.models.SupportTicket || mongoose.model('SupportTicket', SupportTicketSchema);
+export const SupportTicket = mongoose.models?.SupportTicket || mongoose.model('SupportTicket', SupportTicketSchema);

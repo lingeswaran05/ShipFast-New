@@ -98,4 +98,4 @@ RoleRequestSchema.methods.toDto = function () {
   };
 };
 
-export const RoleRequest = mongoose.models.RoleRequest || mongoose.model('RoleRequest', RoleRequestSchema);
+export const RoleRequest = mongoose.models?.RoleRequest || mongoose.model('RoleRequest', RoleRequestSchema);

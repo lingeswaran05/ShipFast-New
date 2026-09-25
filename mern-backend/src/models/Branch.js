@@ -95,4 +95,4 @@ BranchSchema.methods.toDto = function () {
   };
 };
 
-export const Branch = mongoose.models.Branch || mongoose.model('Branch', BranchSchema);
+export const Branch = mongoose.models?.Branch || mongoose.model('Branch', BranchSchema);
