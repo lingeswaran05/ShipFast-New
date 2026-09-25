@@ -6,7 +6,7 @@ import { generateRequestId } from '../utils/idGenerators.js';
 export const createRequest = async (req, res, next) => {
   try {
     const user = req.user;
-    const { requestedRole, reason, phone, vehicleType, vehicleNumber, licenseNumber, experience } = req.body;
+    const { requestedRole, reason, agentDetails, documents } = req.body;
 
     if (!requestedRole) {
       return res.status(400).json({ status: false, message: 'requestedRole is required' });
@@ -14,6 +14,20 @@ export const createRequest = async (req, res, next) => {
 
     const normRole = String(requestedRole).toUpperCase();
     const requestId = generateRequestId();
+
+    const phone = req.body.phone || agentDetails?.phone || user.phoneNumber || '';
+    const vehicleType = req.body.vehicleType || agentDetails?.vehicleType || 'Bike';
+    const vehicleNumber = req.body.vehicleNumber || agentDetails?.vehicleNumber || '';
+    const licenseNumber = req.body.licenseNumber || agentDetails?.licenseNumber || '';
+    const experience = req.body.experience || agentDetails?.experience || '';
+    const aadharNumber = req.body.aadharNumber || agentDetails?.aadharNumber || '';
+    const rcBookNumber = req.body.rcBookNumber || agentDetails?.rcBookNumber || '';
+    const bloodType = req.body.bloodType || agentDetails?.bloodType || '';
+    const organDonor = req.body.organDonor ?? agentDetails?.organDonor ?? false;
+    const profilePhoto = documents?.profilePhoto || agentDetails?.profilePhoto || null;
+    const aadharCopy = documents?.aadharCopy || null;
+    const licenseCopy = documents?.licenseCopy || null;
+    const rcBookCopy = documents?.rcBookCopy || null;
 
     // Check if there's already a pending request
     const existingPending = await RoleRequest.findOne({
@@ -31,6 +45,25 @@ export const createRequest = async (req, res, next) => {
       if (experience) existingPending.experience = experience;
       await existingPending.save();
 
+      if (['AGENT', 'DRIVER', 'OPERATIONS'].includes(normRole)) {
+        await AgentProfile.findOneAndUpdate(
+          { userId: user.userId },
+          {
+            userId: user.userId,
+            agentId: user.userId,
+            fullName: user.fullName,
+            email: user.email,
+            phoneNumber: phone || user.phoneNumber || '',
+            vehicleType: vehicleType || 'Bike',
+            vehicleNumber: vehicleNumber || '',
+            licenseNumber: licenseNumber || '',
+            experience: experience || '',
+            status: 'PENDING'
+          },
+          { upsert: true, new: true }
+        );
+      }
+
       return res.status(200).json({
         status: true,
         message: 'Role request updated successfully',
@@ -45,11 +78,11 @@ export const createRequest = async (req, res, next) => {
       userName: user.fullName,
       requestedRole: normRole,
       reason: reason || '',
-      phone: phone || user.phoneNumber || '',
-      vehicleType: vehicleType || '',
-      vehicleNumber: vehicleNumber || '',
-      licenseNumber: licenseNumber || '',
-      experience: experience || '',
+      phone,
+      vehicleType,
+      vehicleNumber,
+      licenseNumber,
+      experience,
       status: 'PENDING'
     });
 

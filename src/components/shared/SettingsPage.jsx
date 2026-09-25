@@ -223,17 +223,56 @@ export function SettingsPage() {
   const limitAlphaNumeric = (value, max = 12) => String(value || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, max).toUpperCase();
   const limitDigits = (value, max) => String(value || '').replace(/\D/g, '').slice(0, max);
 
-  const convertFileToBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.readAsDataURL(file);
-  });
+  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
+    return new Promise((resolve, reject) => {
+      if (!file || !file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => resolve(event.target.result);
+        img.src = event.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleRequestDocumentUpload = async (field, file) => {
     if (!file) return;
     try {
-      const base64 = await convertFileToBase64(file);
+      const base64 = await compressImage(file);
       setRequestDocs((prev) => ({ ...prev, [field]: base64 }));
     } catch (error) {
       toast.error(error.message || 'Failed to upload file');
@@ -290,16 +329,17 @@ export function SettingsPage() {
   };
 
   // Profile Picture Handlers
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateProfile({ profilePic: reader.result });
+      try {
+        const compressed = await compressImage(file, 400, 400, 0.8);
+        updateProfile({ profilePic: compressed });
         toast.success("Profile photo updated");
         setShowPhotoOptions(false);
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        toast.error("Failed to process photo");
+      }
     }
   };
 
