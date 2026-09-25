@@ -1,98 +1,45 @@
-import mongoose from 'mongoose';
+import { createModel } from '../db/mongo.js';
 
-const BranchSchema = new mongoose.Schema(
-  {
-    branchId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    type: {
-      type: String,
-      default: 'Branch'
-    },
-    address: {
-      type: String,
-      default: ''
-    },
-    location: {
-      type: String,
-      default: ''
-    },
-    state: {
-      type: String,
-      default: ''
-    },
-    managerName: {
-      type: String,
-      default: ''
-    },
-    managerUserId: {
-      type: String,
-      default: ''
-    },
-    contact: {
-      type: String,
-      default: ''
-    },
-    staffCount: {
-      type: Number,
-      default: 0
-    },
-    shipmentVolume: {
-      type: Number,
-      default: 0
-    },
-    revenue: {
-      type: Number,
-      default: 0
-    },
-    performanceScore: {
-      type: Number,
-      default: 100
-    },
-    status: {
-      type: String,
-      default: 'Active'
-    },
-    description: {
-      type: String,
-      default: ''
-    }
-  },
-  {
-    timestamps: true
+const BranchMethods = {
+  toDto: function () {
+    return {
+      id: this.branchId,
+      branchId: this.branchId,
+      name: this.name,
+      type: this.type || 'Branch',
+      location: this.address || this.location || '',
+      address: this.address || this.location || '',
+      state: this.state || '',
+      manager: this.managerName || this.managerUserId || '',
+      managerName: this.managerName || '',
+      managerUserId: this.managerUserId || '',
+      contact: this.contact || '',
+      staffCount: this.staffCount || 0,
+      shipmentVolume: this.shipmentVolume || 0,
+      revenue: this.revenue || 0,
+      performanceScore: this.performanceScore || 100,
+      status: this.status || 'Active',
+      description: this.description || '',
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    };
   }
-);
-
-BranchSchema.methods.toDto = function () {
-  return {
-    id: this.branchId,
-    branchId: this.branchId,
-    name: this.name,
-    type: this.type,
-    location: this.address || this.location,
-    address: this.address || this.location,
-    state: this.state,
-    manager: this.managerName || this.managerUserId,
-    managerName: this.managerName,
-    managerUserId: this.managerUserId,
-    contact: this.contact,
-    staffCount: this.staffCount,
-    shipmentVolume: this.shipmentVolume,
-    revenue: this.revenue,
-    performanceScore: this.performanceScore,
-    status: this.status,
-    description: this.description,
-    createdAt: this.createdAt,
-    updatedAt: this.updatedAt
-  };
 };
 
-export const Branch = mongoose.models?.Branch || mongoose.model('Branch', BranchSchema);
+const BranchDefaults = {
+  type: 'Branch',
+  address: '',
+  location: '',
+  state: '',
+  managerName: '',
+  managerUserId: '',
+  contact: '',
+  staffCount: 0,
+  shipmentVolume: 0,
+  revenue: 0,
+  performanceScore: 100,
+  status: 'Active',
+  description: ''
+};
+
+export const Branch = createModel('branches', BranchMethods, BranchDefaults);

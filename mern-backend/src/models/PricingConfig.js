@@ -1,56 +1,28 @@
-import mongoose from 'mongoose';
+import { createModel } from '../db/mongo.js';
 
-const PricingConfigSchema = new mongoose.Schema(
-  {
-    _id: {
-      type: String,
-      default: 'DEFAULT'
-    },
-    standardRatePerKg: {
-      type: Number,
-      default: 80.0
-    },
-    expressMultiplier: {
-      type: Number,
-      default: 1.75
-    },
-    sameDayMultiplier: {
-      type: Number,
-      default: 2.0
-    },
-    distanceSurcharge: {
-      type: Number,
-      default: 40.0
-    },
-    fuelSurchargePct: {
-      type: Number,
-      default: 9.0
-    },
-    gstPct: {
-      type: Number,
-      default: 5.0
-    },
-    codHandlingFee: {
-      type: Number,
-      default: 50.0
-    }
-  },
-  {
-    timestamps: true,
-    _id: false
+const PricingConfigMethods = {
+  toDto: function () {
+    return {
+      standardRatePerKg: this.standardRatePerKg || 80.0,
+      expressMultiplier: this.expressMultiplier || 1.75,
+      sameDayMultiplier: this.sameDayMultiplier || 2.0,
+      distanceSurcharge: this.distanceSurcharge || 40.0,
+      fuelSurchargePct: this.fuelSurchargePct || 9.0,
+      gstPct: this.gstPct || 5.0,
+      codHandlingFee: this.codHandlingFee || 50.0
+    };
   }
-);
-
-PricingConfigSchema.methods.toDto = function () {
-  return {
-    standardRatePerKg: this.standardRatePerKg,
-    expressMultiplier: this.expressMultiplier,
-    sameDayMultiplier: this.sameDayMultiplier,
-    distanceSurcharge: this.distanceSurcharge,
-    fuelSurchargePct: this.fuelSurchargePct,
-    gstPct: this.gstPct,
-    codHandlingFee: this.codHandlingFee
-  };
 };
 
-export const PricingConfig = mongoose.models?.PricingConfig || mongoose.model('PricingConfig', PricingConfigSchema);
+const PricingConfigDefaults = {
+  _id: 'DEFAULT',
+  standardRatePerKg: 80.0,
+  expressMultiplier: 1.75,
+  sameDayMultiplier: 2.0,
+  distanceSurcharge: 40.0,
+  fuelSurchargePct: 9.0,
+  gstPct: 5.0,
+  codHandlingFee: 50.0
+};
+
+export const PricingConfig = createModel('pricingconfigs', PricingConfigMethods, PricingConfigDefaults);

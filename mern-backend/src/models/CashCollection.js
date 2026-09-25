@@ -1,69 +1,29 @@
-import mongoose from 'mongoose';
+import { createModel } from '../db/mongo.js';
 
-const CashCollectionSchema = new mongoose.Schema(
-  {
-    collectionId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true
-    },
-    agentId: {
-      type: String,
-      required: true,
-      index: true
-    },
-    shipmentTrackingNumber: {
-      type: String,
-      required: true,
-      index: true
-    },
-    amount: {
-      type: Number,
-      required: true
-    },
-    paymentMode: {
-      type: String,
-      enum: ['CASH', 'UPI', 'CARD', 'ONLINE'],
-      default: 'CASH'
-    },
-    isVerified: {
-      type: Boolean,
-      default: false
-    },
-    collectedAt: {
-      type: Date,
-      default: Date.now
-    },
-    verifiedAt: {
-      type: Date,
-      default: null
-    },
-    verifiedBy: {
-      type: String,
-      default: null
-    }
-  },
-  {
-    timestamps: true
+const CashCollectionMethods = {
+  toDto: function () {
+    return {
+      id: this.collectionId,
+      collectionId: this.collectionId,
+      agentId: this.agentId,
+      shipmentTrackingNumber: this.shipmentTrackingNumber,
+      amount: this.amount,
+      paymentMode: this.paymentMode || 'CASH',
+      isVerified: this.isVerified === true,
+      collectedAt: this.collectedAt || this.createdAt,
+      verifiedAt: this.verifiedAt || null,
+      verifiedBy: this.verifiedBy || null,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    };
   }
-);
-
-CashCollectionSchema.methods.toDto = function () {
-  return {
-    id: this.collectionId,
-    collectionId: this.collectionId,
-    agentId: this.agentId,
-    shipmentTrackingNumber: this.shipmentTrackingNumber,
-    amount: this.amount,
-    paymentMode: this.paymentMode,
-    isVerified: this.isVerified,
-    collectedAt: this.collectedAt,
-    verifiedAt: this.verifiedAt,
-    verifiedBy: this.verifiedBy,
-    createdAt: this.createdAt,
-    updatedAt: this.updatedAt
-  };
 };
 
-export const CashCollection = mongoose.models?.CashCollection || mongoose.model('CashCollection', CashCollectionSchema);
+const CashCollectionDefaults = {
+  paymentMode: 'CASH',
+  isVerified: false,
+  verifiedAt: null,
+  verifiedBy: null
+};
+
+export const CashCollection = createModel('cashcollections', CashCollectionMethods, CashCollectionDefaults);

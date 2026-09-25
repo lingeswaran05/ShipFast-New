@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import { getDb, closeDb } from '../../mern-backend/src/db/mongo.js';
 import * as authCtrl from '../../mern-backend/src/controllers/authController.js';
 import * as shipCtrl from '../../mern-backend/src/controllers/shipmentController.js';
 import * as opsCtrl from '../../mern-backend/src/controllers/operationsController.js';
@@ -8,18 +8,6 @@ import * as commCtrl from '../../mern-backend/src/controllers/communicationsCont
 import * as repCtrl from '../../mern-backend/src/controllers/reportingController.js';
 import { verifyToken, requireAdmin, optionalAuth } from '../../mern-backend/src/middleware/auth.js';
 
-let isConnected = false;
-async function ensureDB(uri) {
-  if (isConnected && mongoose.connection.readyState >= 1) return;
-  const m = typeof mongoose.connect === 'function' ? mongoose : (typeof mongoose.default?.connect === 'function' ? mongoose.default : mongoose);
-  await m.connect(uri, {
-    bufferCommands: false,
-    autoIndex: true,
-  });
-  isConnected = true;
-}
-
-// Helper to match pattern like /api/admin/branches/:branchId
 function matchRoute(routePattern, path) {
   const patternParts = routePattern.split('/').filter(Boolean);
   const pathParts = path.split('/').filter(Boolean);
@@ -40,71 +28,6 @@ function matchRoute(routePattern, path) {
 export async function onRequest(context) {
   const { request, env } = context;
 
-  // 1. CORS Preflight
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id, X-Branch-Id, Accept',
-      }
-    });
-  }
-
-  // 2. Connect to Database
-  const uri = env?.MONGODB_URI || 'mongodb+srv://lingesw0561_db_user:wYzDBE5eeNyKdiMI@shipfastcluster.6pkdcqc.mongodb.net/shipfast?retryWrites=true&w=majority';
-  try {
-    await ensureDB(uri);
-  } catch (err) {
-    return new Response(JSON.stringify({
-      status: false,
-      message: 'Database connection error: ' + err.message,
-      note: 'Ensure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
-  }
-
-  // 3. Build req and res objects
-  const url = new URL(request.url);
-  const pathname = url.pathname.replace(/\/+$/, '') || '/';
-  const method = request.method.toUpperCase();
-
-  let body = {};
-  if (['POST', 'PUT', 'PATCH'].includes(method)) {
-    try {
-      const text = await request.text();
-      if (text) {
-        body = JSON.parse(text);
-      }
-    } catch {
-      body = {};
-    }
-  }
-
-  const query = Object.fromEntries(url.searchParams.entries());
-  const headers = {};
-  for (const [k, v] of request.headers.entries()) {
-    headers[k.toLowerCase()] = v;
-  }
-
-  const req = {
-    method,
-    url: pathname + url.search,
-    originalUrl: pathname + url.search,
-    path: pathname,
-    query,
-    body,
-    headers,
-    params: {},
-    user: null,
-    userId: null,
-    userEmail: null,
-    userRole: null
-  };
-
   const resHeaders = new Headers({
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
@@ -112,57 +35,108 @@ export async function onRequest(context) {
     'Content-Type': 'application/json'
   });
 
-  return new Promise(async (resolve) => {
-    let responded = false;
+  try {
+    // 1. CORS Preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: resHeaders
+      });
+    }
+
+    // 2. Connect to Database
+    const uri = env?.MONGODB_URI || 'mongodb+srv://lingesw0561_db_user:wYzDBE5eeNyKdiMI@shipfastcluster.6pkdcqc.mongodb.net/shipfast?retryWrites=true&w=majority';
+    try {
+      await getDb(uri);
+    } catch (err) {
+      return new Response(JSON.stringify({
+        status: false,
+        message: 'Database connection error: ' + err.message,
+        note: 'Ensure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.'
+      }), {
+        status: 500,
+        headers: resHeaders
+      });
+    }
+
+    // 3. Build req and res objects
+    const url = new URL(request.url);
+    const pathname = url.pathname.replace(/\/+$/, '') || '/';
+    const method = request.method.toUpperCase();
+
+    let body = {};
+    if (['POST', 'PUT', 'PATCH'].includes(method)) {
+      try {
+        const contentType = request.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          body = await request.json();
+        } else {
+          const text = await request.text();
+          if (text) {
+            try { body = JSON.parse(text); } catch { body = text; }
+          }
+        }
+      } catch (e) {
+        body = {};
+      }
+    }
+
+    const query = Object.fromEntries(url.searchParams.entries());
+    const headers = {};
+    for (const [k, v] of request.headers.entries()) {
+      headers[k.toLowerCase()] = v;
+    }
+
+    const req = {
+      method,
+      url: pathname + url.search,
+      originalUrl: pathname + url.search,
+      path: pathname,
+      query,
+      body,
+      headers,
+      params: {},
+      user: null,
+      userId: null,
+      userEmail: null,
+      userRole: null
+    };
+
+    let responseObj = null;
+
     const res = {
+      statusCode: 200,
       status(code) {
         this.statusCode = code;
         return this;
       },
-      statusCode: 200,
       setHeader(key, value) {
         resHeaders.set(key, value);
       },
       json(data) {
-        if (responded) return;
-        responded = true;
+        if (responseObj) return;
         resHeaders.set('Content-Type', 'application/json');
-        resolve(new Response(JSON.stringify(data), {
+        responseObj = new Response(JSON.stringify(data), {
           status: this.statusCode || 200,
           headers: resHeaders
-        }));
+        });
       },
       send(data) {
-        if (responded) return;
-        responded = true;
+        if (responseObj) return;
         if (typeof data === 'object') {
           return this.json(data);
         }
-        resolve(new Response(data, {
+        responseObj = new Response(data, {
           status: this.statusCode || 200,
           headers: resHeaders
-        }));
+        });
       }
     };
 
     const next = (err) => {
-      if (err) {
-        res.status(500).json({ status: false, message: err.message || 'Internal server error' });
+      if (err && !responseObj) {
+        res.status(500).json({ status: false, message: err.message || 'Internal server error', stack: err.stack });
       }
-    };
-
-    // Helper runner for middlewares & handler
-    const run = async (middlewares, handler, params) => {
-      req.params = params || {};
-      for (const mw of middlewares) {
-        let nextCalled = false;
-        await mw(req, res, (err) => {
-          if (err) return next(err);
-          nextCalled = true;
-        });
-        if (!nextCalled || responded) return;
-      }
-      return handler(req, res, next);
     };
 
     // Route matching table
@@ -293,20 +267,49 @@ export async function onRequest(context) {
       if (r.method === method) {
         const params = matchRoute(r.path, pathname);
         if (params !== null) {
+          req.params = params || {};
           try {
-            await run(r.middlewares || [], r.handler, params);
-            return;
+            // Run middlewares
+            for (const mw of (r.middlewares || [])) {
+              let nextCalled = false;
+              await mw(req, res, (err) => {
+                if (err) next(err);
+                else nextCalled = true;
+              });
+              if (!nextCalled || responseObj) break;
+            }
+            if (!responseObj) {
+              await r.handler(req, res, next);
+            }
           } catch (routeErr) {
-            return res.status(500).json({ status: false, message: routeErr.message });
+            next(routeErr);
+          }
+
+          if (responseObj) {
+            return responseObj;
           }
         }
       }
     }
 
     // 404
-    return res.status(404).json({
+    return new Response(JSON.stringify({
       status: false,
       message: `API endpoint ${method} ${pathname} not found`
+    }), {
+      status: 404,
+      headers: resHeaders
     });
-  });
+  } catch (globalError) {
+    return new Response(JSON.stringify({
+      status: false,
+      message: 'Server error: ' + globalError.message,
+      stack: globalError.stack
+    }), {
+      status: 500,
+      headers: resHeaders
+    });
+  } finally {
+    await closeDb();
+  }
 }
