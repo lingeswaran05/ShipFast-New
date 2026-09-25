@@ -134,7 +134,20 @@ export const getPendingRequests = async (req, res, next) => {
 export const getMyRequestStatus = async (req, res, next) => {
   try {
     const user = req.user;
-    const latestRequest = await RoleRequest.findOne({ userId: user.userId }).sort({ createdAt: -1 });
+    if (!user) {
+      return res.status(401).json({ status: false, message: 'Unauthorized' });
+    }
+    const userId = user.userId || user.id;
+    const email = String(user.email || '').toLowerCase();
+
+    const query = {
+      $or: [
+        ...(userId ? [{ userId }] : []),
+        ...(email ? [{ userEmail: email }, { email }] : [])
+      ]
+    };
+
+    const latestRequest = await RoleRequest.findOne(query).sort({ createdAt: -1 });
 
     if (!latestRequest) {
       return res.status(200).json({
