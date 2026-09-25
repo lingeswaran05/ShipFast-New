@@ -206,8 +206,13 @@ export async function onRequest(context) {
       { method: 'PATCH', path: '/api/shipments/:shipmentId/status', middlewares: [optionalAuth], handler: shipCtrl.updateStatus },
       { method: 'PATCH', path: '/api/v1/shipments/:shipmentId/status', middlewares: [optionalAuth], handler: shipCtrl.updateStatus },
       { method: 'PATCH', path: '/api/shipments/:shipmentId/assign', handler: shipCtrl.assignShipment },
+      { method: 'PATCH', path: '/api/v1/shipments/:shipmentId/assign', handler: shipCtrl.assignShipment },
       { method: 'POST', path: '/api/shipments/:shipmentId/assign', handler: shipCtrl.assignShipment },
+      { method: 'POST', path: '/api/v1/shipments/:shipmentId/assign', handler: shipCtrl.assignShipment },
       { method: 'POST', path: '/api/shipments/:shipmentId/rating', handler: shipCtrl.addRating },
+      { method: 'POST', path: '/api/v1/shipments/:shipmentId/rating', handler: shipCtrl.addRating },
+      { method: 'POST', path: '/api/shipments/:shipmentId/rate', handler: shipCtrl.addRating },
+      { method: 'POST', path: '/api/v1/shipments/:shipmentId/rate', handler: shipCtrl.addRating },
 
       // Operations
       { method: 'POST', path: '/api/operations/agents', handler: opsCtrl.createAgent },
@@ -309,7 +314,5 @@ export async function onRequest(context) {
       status: 500,
       headers: resHeaders
     });
-  } finally {
-    await closeDb();
   }
 }

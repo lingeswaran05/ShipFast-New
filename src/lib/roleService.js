@@ -11,7 +11,7 @@ const ROLE_BASE_URLS = resolveServiceBaseUrls(import.meta.env.VITE_AUTH_BASE_URL
 
 const api = axios.create({
   baseURL: ROLE_BASE_URLS[0],
-  timeout: 15000,
+  timeout: 120000,
   headers: {
     'Content-Type': 'application/json'
   }
